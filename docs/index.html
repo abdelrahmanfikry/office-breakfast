@@ -253,7 +253,7 @@ function doRender(){
   if (aid){ const el = document.getElementById(aid); if (el){ el.focus(); try{ el.setSelectionRange(s1,s2); }catch{} } }
 }
 function shell(route, body){
-  const pend = S.transfers.filter(t => t.toUid===me() && !t.confirmed).length;
+  const pend = S.transfers.filter(t => t.toUid===me() && !t.confirmed && !t.rejected).length;
   const tab = (r, label, extra='') => `<a href="#${r}" class="${route===r || (r==='home'&&route==='order')?'on':''}">${label}${extra}</a>`;
   return `<header class="top"><div class="in"><a href="#home" class="brand"><img src="icon.png" alt="">فطار المكتب</a><span class="sp"></span><a href="#profile" class="who">${esc(uname(me()))}</a></div></header>
   <main class="wrap">${body}</main>
@@ -312,13 +312,15 @@ function vHome(){
   const t = myTotals();
   const open = S.orders.filter(o => o.status==='open');
   const today = S.orders.filter(o => o.status==='closed' && o.day===todayStr());
-  const pend = S.transfers.filter(x => x.toUid===me() && !x.confirmed);
+  const pend = S.transfers.filter(x => x.toUid===me() && !x.confirmed && !x.rejected);
+  const caught = S.transfers.filter(x => x.fromUid===me() && x.rejected);
   return `
   <div class="stats" style="margin-top:6px">
     <a href="#money" class="stat ok"><small>ليك عند الناس</small><b>${money(t.owed)}</b></a>
     <a href="#money" class="stat bad"><small>عليك للناس</small><b>${money(t.owe)}</b></a>
   </div>
   ${pend.length?`<a href="#transfers" class="card" style="display:block;margin-top:10px"><span class="pill warn">${pend.length}</span> تحويل محتاج تأكيدك إنه وصلك</a>`:''}
+  ${caught.length?`<a href="#transfers" class="card" style="display:block;margin-top:10px;border-color:var(--bad)"><span class="pill cancelled">${esc(thiefLine(caught[0].id))}</span> ${esc(uname(caught[0].toUid))} بيقول التحويل بتاعك (${money(caught[0].amount)}) موصلش</a>`:''}
   <div class="row" style="margin-top:12px">
     <button class="btn" data-act="newOrder" data-id="${todayStr()}">+ طلبية النهارده</button>
     <button class="btn" data-act="newOrder" data-id="${yesterdayStr()}">+ طلبية امبارح</button>
@@ -447,15 +449,20 @@ function vTransfers(){
     return `<div class="person"><div class="between">
       <div><b>${esc(uname(t.fromUid))}</b> حوّل لـ <b>${esc(uname(t.toUid))}</b>
       <div class="mut" style="font-size:13px">${dayLabel(dayOfTs(t.createdAt))} ${timeOf(t.createdAt)}${t.note?' · '+esc(t.note):''}</div></div>
-      <div style="text-align:end"><b>${money(t.amount)}</b><div>${t.confirmed ? '<span class="pill closed">متأكد</span>' : '<span class="pill warn">مستني تأكيد</span>'}</div></div></div>
-      ${!t.confirmed && toMe ? `<div class="row" style="margin-top:6px"><button class="btn sm pri" data-act="confirmTr" data-id="${t.id}">وصلني</button><button class="btn sm dan" data-act="delTr" data-id="${t.id}">موصلش</button></div>`:''}
-      ${!t.confirmed && fromMe ? `<div class="row" style="margin-top:6px"><button class="btn sm dan" data-act="delTr" data-id="${t.id}">امسحه</button></div>`:''}
+      <div style="text-align:end"><b style="${t.rejected?'text-decoration:line-through;opacity:.7':''}">${money(t.amount)}</b><div>${t.confirmed ? '<span class="pill closed">متأكد</span>' : t.rejected ? `<span class="pill cancelled">${esc(thiefLine(t.id))}</span>` : '<span class="pill warn">مستني تأكيد</span>'}</div></div></div>
+      ${t.rejected ? `<div class="bad" style="font-size:13px;margin-top:4px">${esc(uname(t.toUid))} بيقول الفلوس موصلتش — ومش محسوبة في الحساب.</div>` : ''}
+      ${!t.confirmed && !t.rejected && toMe ? `<div class="row" style="margin-top:6px"><button class="btn sm pri" data-act="confirmTr" data-id="${t.id}">وصلني</button><button class="btn sm dan" data-act="rejectTr" data-id="${t.id}">موصلش</button></div>`:''}
+      ${t.rejected && toMe ? `<div class="row" style="margin-top:6px"><button class="btn sm pri" data-act="confirmTr" data-id="${t.id}">لأ خلاص وصلني</button></div>`:''}
+      ${!t.confirmed && fromMe ? `<div class="row" style="margin-top:6px">${t.rejected ? `<button class="btn sm pri" data-act="swearTr" data-id="${t.id}">والله حوّلت!</button>` : ''}<button class="btn sm dan" data-act="delTr" data-id="${t.id}">امسحه</button></div>`:''}
     </div>`;
   };
   return `<h2>تحويلاتي</h2><div class="card">${mine.length ? mine.map(row).join('') : '<div class="empty">مفيش تحويلات</div>'}</div>
   ${all.length ? `<h2>باقي التحويلات</h2><div class="card">${all.slice(0,50).map(row).join('')}</div>`:''}
   <button class="btn pri fab" data-act="newTransfer">+ تحويل</button>`;
 }
+// جمل هزار للتحويل اللي موصلش — ثابتة لكل تحويل
+const THIEF = ['امسك حرامي!', 'تحويل بالنية', 'الفلوس ضلّت الطريق', 'حوّل على الهوا', 'لسه في الطريق… من سنة', 'البنك بيقول مشفناهوش'];
+const thiefLine = id => THIEF[[...String(id)].reduce((a,c)=>a + c.charCodeAt(0), 0) % THIEF.length];
 function dayOfTs(x){ const d = new Date(tsOf(x)); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 
 /* ---------- المنيوهات ---------- */
@@ -662,7 +669,9 @@ const A = {
     <label>ملاحظة<input name="note" placeholder="مثلاً: انستاباي"></label>
     <p class="mut" style="font-size:13px;margin-top:0">التحويل مش بيتحسب غير لما اللي استلم يأكد إنه وصله.</p>`,
     f => addDoc(collection(db,'transfers'), { fromUid:me(), toUid:f.get('to'), amount:+f.get('amount'), note:f.get('note').trim(), confirmed:false, createdAt:serverTimestamp() }), 'سجّل'),
-  confirmTr: id => updateDoc(doc(db,'transfers',id), { confirmed:true, confirmedAt:serverTimestamp() }),
+  confirmTr: id => updateDoc(doc(db,'transfers',id), { confirmed:true, confirmedAt:serverTimestamp(), rejected:false }),
+  rejectTr: async id => { if (confirm('متأكد إن الفلوس موصلتش؟ هيظهر للكل')) { await updateDoc(doc(db,'transfers',id), { rejected:true, rejectedAt:serverTimestamp() }); toast(thiefLine(id)); } },
+  swearTr: async id => { await updateDoc(doc(db,'transfers',id), { rejected:false, rejectedAt:null }); toast('اتبعتله تاني يأكد'); },
   delTr: async id => { if (confirm('تمسح التحويل ده؟')) await deleteDoc(doc(db,'transfers',id)); },
 
   newRest: () => restModal(),
