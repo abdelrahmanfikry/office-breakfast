@@ -1,0 +1,673 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f766e">
+<title>فطار المكتب</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f6f4;--card:#fff;--ink:#1c2321;--mut:#6b7671;--line:#e3e7e4;
+  --pri:#0f766e;--pri2:#e6f4f2;--ok:#15803d;--okbg:#e8f6ec;--bad:#b42318;--badbg:#fdecea;--warn:#a15c07;--warnbg:#fff4e0;
+  --r:14px;--sh:0 1px 2px rgba(0,0,0,.05),0 4px 14px rgba(0,0,0,.05);
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#111514;--card:#1a201e;--ink:#e8edeb;--mut:#93a09a;--line:#2a3330;
+  --pri:#2dd4bf;--pri2:#123631;--ok:#4ade80;--okbg:#14301d;--bad:#f87171;--badbg:#3a1714;--warn:#fbbf24;--warnbg:#3a2a0c;
+  --sh:none;}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Cairo,system-ui,sans-serif;font-size:15px}
+a{color:inherit;text-decoration:none}
+button,input,select,textarea{font:inherit;color:inherit}
+.wrap{max-width:860px;margin:0 auto;padding:12px 16px 96px}
+header.top{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line)}
+header.top .in{max-width:860px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:10px}
+.brand{font-weight:700;font-size:18px;color:var(--pri)}
+.sp{flex:1}
+.who{color:var(--mut);font-size:13px}
+nav.tabs{position:fixed;bottom:0;inset-inline:0;z-index:5;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom)}
+nav.tabs a{flex:1;max-width:140px;text-align:center;padding:9px 2px;font-size:13px;color:var(--mut);position:relative}
+nav.tabs a.on{color:var(--pri);font-weight:700}
+nav.tabs a.on::before{content:"";position:absolute;top:0;inset-inline:25%;height:3px;border-radius:3px;background:var(--pri)}
+.badge{display:inline-block;min-width:18px;padding:0 5px;border-radius:9px;background:var(--bad);color:#fff;font-size:11px;line-height:18px}
+h2{font-size:18px;margin:18px 0 10px}
+h3{font-size:16px;margin:0 0 6px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;box-shadow:var(--sh);margin-bottom:10px}
+.grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{border-radius:var(--r);padding:12px 14px}
+.stat small{display:block;font-size:13px;opacity:.85}
+.stat b{font-size:22px}
+.stat.ok{background:var(--okbg);color:var(--ok)}.stat.bad{background:var(--badbg);color:var(--bad)}
+.mut{color:var(--mut)}.ok{color:var(--ok)}.bad{color:var(--bad)}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.between{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.pill{display:inline-block;padding:1px 9px;border-radius:20px;font-size:12px;font-weight:600}
+.pill.open{background:var(--okbg);color:var(--ok)}.pill.closed{background:var(--pri2);color:var(--pri)}.pill.cancelled{background:var(--badbg);color:var(--bad)}.pill.warn{background:var(--warnbg);color:var(--warn)}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:7px 13px;cursor:pointer;font-weight:600;white-space:nowrap}
+.btn:hover{border-color:var(--pri)}
+.btn.pri{background:var(--pri);border-color:var(--pri);color:#fff}
+@media (prefers-color-scheme:dark){.btn.pri{color:#06201d}}
+.btn.dan{color:var(--bad)}
+.btn.sm{padding:3px 9px;font-size:13px;border-radius:8px}
+.btn:disabled{opacity:.5;cursor:default}
+.fab{position:fixed;bottom:70px;inset-inline-start:max(16px,calc(50% - 414px));z-index:6;border-radius:30px;padding:11px 20px;box-shadow:0 6px 18px rgba(0,0,0,.18)}
+.ord{display:block}
+.ord .meta{font-size:13px;color:var(--mut);margin-top:4px}
+.ord .tot{font-weight:700}
+.person{border-top:1px solid var(--line);padding:10px 0}
+.person:first-child{border-top:0}
+.it{display:flex;gap:8px;align-items:baseline;padding:3px 0;font-size:14px}
+.it .n{flex:1}.it .p{white-space:nowrap}
+.it .note{color:var(--mut);font-size:12px}
+.seg{display:inline-flex;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:3px;gap:3px}
+.seg button{border:0;background:none;padding:5px 12px;border-radius:8px;cursor:pointer;color:var(--mut)}
+.seg button.on{background:var(--card);color:var(--ink);font-weight:700;box-shadow:var(--sh)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td,th{padding:8px 4px;border-bottom:1px solid var(--line);text-align:start}
+th{color:var(--mut);font-weight:600;font-size:13px}
+.num{text-align:end;white-space:nowrap}
+input,select,textarea{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 11px;margin-top:4px;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--pri)}
+label{display:block;margin-bottom:10px;font-size:14px;color:var(--mut)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.modal{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center}
+.modal.hidden{display:none}
+.sheet{background:var(--card);width:100%;max-width:520px;max-height:92vh;overflow:auto;border-radius:18px 18px 0 0;padding:16px}
+@media(min-width:600px){.modal{align-items:center}.sheet{border-radius:18px}}
+.mh{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:17px}
+.x{border:0;background:none;font-size:18px;cursor:pointer;color:var(--mut)}
+.mfoot{display:flex;gap:8px;margin-top:6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.chip{border:1px solid var(--line);background:var(--bg);border-radius:20px;padding:4px 11px;cursor:pointer;font-size:13px}
+.chip:hover,.chip.on{border-color:var(--pri);color:var(--pri)}
+.chip small{color:var(--mut)}
+#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:30;background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw}
+#toast.on{opacity:1}
+.auth{max-width:380px;margin:9vh auto 0}
+.auth .logo{font-size:26px;font-weight:700;color:var(--pri);text-align:center;margin-bottom:4px}
+.empty{text-align:center;color:var(--mut);padding:28px 10px}
+pre.sum{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px;font-family:inherit;font-size:14px;margin:0 0 10px}
+.dayh{font-size:13px;color:var(--mut);margin:14px 0 6px;font-weight:600}
+.loading{text-align:center;color:var(--mut);padding:40px}
+</style>
+</head>
+<body>
+<div id="app"><div class="loading">جاري التحميل…</div></div>
+<div id="modal" class="modal hidden"></div>
+<div id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword,
+         signOut, sendPasswordResetEmail, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, collection, collectionGroup, doc, addDoc, setDoc, updateDoc, deleteDoc,
+         onSnapshot, query, orderBy, serverTimestamp, writeBatch, getDocs, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+/* ===================== الإعدادات — غيّرها ===================== */
+const firebaseConfig = {
+  apiKey: "AIzaSyAwG62q5EdBoKQaq8Pf8sMQPgj5zKtseCI",
+  authDomain: "office-breakfast-c9338.firebaseapp.com",
+  projectId: "office-breakfast-c9338",
+  storageBucket: "office-breakfast-c9338.firebasestorage.app",
+  messagingSenderId: "119293186533",
+  appId: "1:119293186533:web:faea52c1afa25eb7aa1f0c"
+};
+const CURRENCY = "ر.س";      // العملة اللي بتظهر جنب الأرقام
+/* ============================================================ */
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+const S = { me:null, users:{}, orders:[], items:{}, transfers:[], rests:[], admins:null, carry:{}, notes:{}, notesFor:null, notesUnsub:null,
+            loaded:{}, unsubs:[], otab:'people', hf:'all', q:'', authMode:'login' };
+const isAdmin = () => !!S.admins?.includes(me());
+
+/* ---------- أدوات ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const r2 = n => Math.round((+n || 0) * 100) / 100;
+const money = n => `${r2(n).toLocaleString('en-US',{maximumFractionDigits:2})} ${CURRENCY}`;
+const me = () => S.me?.uid;
+const uname = uid => S.users[uid]?.name || 'مستخدم';
+const yesterdayStr = () => dayOfTs({ toMillis:()=>Date.now()-864e5 });
+const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+const tsOf = x => x?.toMillis ? x.toMillis() : Date.now();
+const dayLabel = s => { if (s === todayStr()) return 'النهارده'; if (s === yesterdayStr()) return 'امبارح'; const d = new Date(s + 'T00:00'); return d.toLocaleDateString('ar-EG',{weekday:'long',day:'numeric',month:'long'}); };
+const timeOf = x => new Date(tsOf(x)).toLocaleTimeString('ar-EG',{hour:'numeric',minute:'2-digit'});
+const STATUS = { open:'مفتوحة للطلب', closed:'اتقفلت واتطلبت', cancelled:'اتلغت' };
+
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('on'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('on'),2600); }
+function errMsg(e){
+  const c = e?.code || '';
+  const m = {
+    'permission-denied':'مش مسموح لك تعمل ده',
+    'auth/invalid-credential':'الإيميل أو الباسورد غلط','auth/wrong-password':'الإيميل أو الباسورد غلط','auth/user-not-found':'الإيميل ده مش متسجّل',
+    'auth/email-already-in-use':'الإيميل ده متسجّل قبل كده','auth/weak-password':'الباسورد لازم 6 حروف على الأقل',
+    'auth/invalid-email':'الإيميل مكتوب غلط','auth/too-many-requests':'محاولات كتير — استنى شوية','unavailable':'مفيش اتصال بالنت'
+  };
+  return m[c] || m[c.replace('firestore/','')] || (e?.message || 'حصل خطأ');
+}
+async function copy(text){ try{ await navigator.clipboard.writeText(text); toast('اتنسخ'); }catch{ toast('النسخ مش متاح'); } }
+
+/* ---------- الحسابات ---------- */
+function orderCalc(o){
+  const its = (S.items[o.id] || []).slice().sort((a,b)=>tsOf(a.createdAt)-tsOf(b.createdAt));
+  const per = {};
+  for (const it of its){
+    const p = per[it.uid] ??= { uid:it.uid, items:[], sub:0 };
+    p.items.push(it); p.sub += (+it.qty||0) * (+it.price||0);
+  }
+  const parts = Object.values(per);
+  const fee = +o.fee || 0, share = parts.length ? fee / parts.length : 0;
+  parts.forEach(p => p.total = p.sub + share);
+  const subtotal = parts.reduce((a,p)=>a+p.sub,0);
+  return { its, parts, fee, share, subtotal, total: subtotal + fee };
+}
+// pair[a][b] موجب = b عليه لـ a
+function ledger(){
+  const net = {}, pair = {};
+  const add = (cr, dr, amt) => {
+    if (!cr || !dr || cr === dr || !amt) return;
+    net[cr] = (net[cr]||0) + amt; net[dr] = (net[dr]||0) - amt;
+    (pair[cr] ??= {})[dr] = (pair[cr][dr]||0) + amt;
+    (pair[dr] ??= {})[cr] = (pair[dr][cr]||0) - amt;
+  };
+  for (const o of S.orders){
+    if (o.status !== 'closed' || !o.payerUid) continue;
+    for (const p of orderCalc(o).parts) add(o.payerUid, p.uid, p.total);
+  }
+  for (const t of S.transfers) if (t.confirmed) add(t.fromUid, t.toUid, +t.amount||0);
+  // الأرصدة المرحّلة من البيانات القديمة اللي اتمسحت
+  for (const [k, v] of Object.entries(S.carry)){ const [a, b] = k.split('_'); if (v > 0) add(a, b, v); else if (v < 0) add(b, a, -v); }
+  return { net, pair };
+}
+// مفتاح الترحيل: "a_b" مترتب — موجب = b عليه لـ a
+const carryKey = (cr, dr) => cr < dr ? [`${cr}_${dr}`, 1] : [`${dr}_${cr}`, -1];
+function contribution(orders, transfers){
+  const out = {};
+  const add = (cr, dr, amt) => { if (!cr || !dr || cr===dr || !amt) return; const [k, s] = carryKey(cr, dr); out[k] = (out[k]||0) + s*amt; };
+  for (const o of orders){ if (o.status !== 'closed' || !o.payerUid) continue; for (const p of orderCalc(o).parts) add(o.payerUid, p.uid, p.total); }
+  for (const t of transfers) if (t.confirmed) add(t.fromUid, t.toUid, +t.amount||0);
+  return out;
+}
+
+/* ---------- الاستماع للبيانات (Realtime) ---------- */
+function startListeners(){
+  const L = (name, ref, fn) => S.unsubs.push(onSnapshot(ref, snap => { fn(snap); S.loaded[name]=true; render(); }, e => toast(errMsg(e))));
+  L('users', collection(db,'users'), snap => {
+    S.users = {}; snap.forEach(d => S.users[d.id] = { id:d.id, ...d.data() });
+    if (!S.users[me()]) setDoc(doc(db,'users',me()), { name: S.me.displayName || S.me.email.split('@')[0], email:S.me.email, payInfo:'', createdAt:serverTimestamp() }).catch(()=>{});
+  });
+  L('orders', query(collection(db,'orders'), orderBy('createdAt','desc')), snap => {
+    S.orders = snap.docs.map(d => ({ id:d.id, ...d.data({serverTimestamps:'estimate'}) }));
+  });
+  L('items', collectionGroup(db,'items'), snap => {
+    S.items = {};
+    snap.forEach(d => { const oid = d.ref.parent.parent.id; (S.items[oid] ??= []).push({ id:d.id, oid, ...d.data({serverTimestamps:'estimate'}) }); });
+  });
+  L('transfers', query(collection(db,'transfers'), orderBy('createdAt','desc')), snap => {
+    S.transfers = snap.docs.map(d => ({ id:d.id, ...d.data({serverTimestamps:'estimate'}) }));
+  });
+  L('rests', collection(db,'restaurants'), snap => {
+    S.rests = snap.docs.map(d => ({ id:d.id, ...d.data() })).sort((a,b)=>(a.name||'').localeCompare(b.name||'','ar'));
+  });
+  L('config', doc(db,'config','app'), d => { S.admins = d.exists() ? (d.data().admins || []) : null; });
+  L('carry', doc(db,'carry','pairs'), d => { S.carry = d.exists() ? (d.data().pairs || {}) : {}; });
+}
+function stopListeners(){ S.unsubs.forEach(u=>u()); S.unsubs=[]; S.loaded={}; watchNotes(null); }
+// ملاحظات الطلبية: بنسمع لها بس وانت فاتح الطلبية (توفير قراءات)
+function watchNotes(oid){
+  if (S.notesFor === oid) return;
+  S.notesUnsub?.(); S.notesUnsub = null; S.notesFor = oid;
+  if (!oid) return;
+  S.notesUnsub = onSnapshot(query(collection(db,'orders',oid,'notes'), orderBy('createdAt')), snap => {
+    S.notes[oid] = snap.docs.map(d => ({ id:d.id, ...d.data({serverTimestamps:'estimate'}) })); render();
+  }, e => toast(errMsg(e)));
+}
+
+/* ---------- الرسم ---------- */
+let raf = 0;
+function render(){ if (raf) return; raf = requestAnimationFrame(()=>{ raf=0; doRender(); }); }
+function doRender(){
+  const app = $('#app');
+  if (!S.me){ app.innerHTML = vAuth(); return; }
+  if (!['users','orders','items','transfers','rests','config','carry'].every(k=>S.loaded[k])){ app.innerHTML = '<div class="loading">جاري تحميل البيانات…</div>'; return; }
+  const ae = document.activeElement, aid = ae?.id, s1 = ae?.selectionStart, s2 = ae?.selectionEnd;
+  const [route, arg] = (location.hash.slice(1) || 'home').split('/');
+  watchNotes(route === 'order' ? arg : null);
+  const V = { home:vHome, order:()=>vOrder(arg), history:vHistory, money:vMoney, transfers:vTransfers, menus:vMenus, profile:vProfile };
+  app.innerHTML = shell(route, (V[route] || vHome)());
+  if (aid){ const el = document.getElementById(aid); if (el){ el.focus(); try{ el.setSelectionRange(s1,s2); }catch{} } }
+}
+function shell(route, body){
+  const pend = S.transfers.filter(t => t.toUid===me() && !t.confirmed).length;
+  const tab = (r, label, extra='') => `<a href="#${r}" class="${route===r || (r==='home'&&route==='order')?'on':''}">${label}${extra}</a>`;
+  return `<header class="top"><div class="in"><a href="#home" class="brand">فطار المكتب</a><span class="sp"></span><a href="#profile" class="who">${esc(uname(me()))}</a></div></header>
+  <main class="wrap">${body}</main>
+  <nav class="tabs">${tab('home','الرئيسية')}${tab('history','الطلبيات')}${tab('money','الحساب')}${tab('transfers','التحويلات', pend?` <span class="badge">${pend}</span>`:'')}${tab('menus','المنيوهات')}${tab('profile','حسابي')}</nav>`;
+}
+
+/* ---------- شاشة الدخول ---------- */
+function vAuth(){
+  const sign = S.authMode === 'signup';
+  return `<div class="wrap"><div class="auth card">
+    <div class="logo">فطار المكتب</div>
+    <p class="mut" style="text-align:center;margin-top:0">الطلبات والتجميع والحساب في مكان واحد</p>
+    <div style="text-align:center;margin-bottom:14px"><div class="seg">
+      <button type="button" class="${!sign?'on':''}" data-act="authMode" data-id="login">دخول</button>
+      <button type="button" class="${sign?'on':''}" data-act="authMode" data-id="signup">حساب جديد</button></div></div>
+    <form id="authForm">
+      ${sign ? '<label>اسمك (اللي هيظهر للناس)<input name="name" required></label>' : ''}
+      <label>الإيميل<input name="email" type="email" required autocomplete="email"></label>
+      <label>الباسورد<input name="pass" type="password" required minlength="6" autocomplete="${sign?'new-password':'current-password'}"></label>
+      <button class="btn pri" style="width:100%" type="submit">${sign?'اعمل الحساب':'ادخل'}</button>
+    </form>
+    ${!sign ? '<p style="text-align:center;margin-bottom:0"><a href="#" data-act="forgot" class="mut">نسيت الباسورد؟</a></p>' : ''}
+  </div></div>`;
+}
+document.addEventListener('submit', async e => {
+  if (e.target.id !== 'authForm') return;
+  e.preventDefault();
+  const f = new FormData(e.target), btn = e.target.querySelector('button[type=submit]'); btn.disabled = true;
+  try{
+    if (S.authMode === 'signup'){
+      const name = f.get('name').trim();
+      const cred = await createUserWithEmailAndPassword(auth, f.get('email').trim(), f.get('pass'));
+      await updateProfile(cred.user, { displayName:name });
+      await setDoc(doc(db,'users',cred.user.uid), { name, email:cred.user.email, payInfo:'', createdAt:serverTimestamp() });
+    } else {
+      await signInWithEmailAndPassword(auth, f.get('email').trim(), f.get('pass'));
+    }
+  }catch(err){ toast(errMsg(err)); btn.disabled = false; }
+});
+
+/* ---------- الرئيسية ---------- */
+function myTotals(){
+  const mine = ledger().pair[me()] || {}; let owed=0, owe=0;
+  for (const v of Object.values(mine)){ if (v > 0.009) owed += v; else if (v < -0.009) owe -= v; }
+  return { owed, owe };
+}
+function orderCard(o){
+  const c = orderCalc(o), mineIn = c.parts.some(p=>p.uid===me());
+  return `<a class="card ord" href="#order/${o.id}">
+    <div class="between"><h3>${esc(o.title)}</h3><span class="pill ${o.status}">${STATUS[o.status]}</span></div>
+    <div class="meta">${o.restaurantName?esc(o.restaurantName)+' · ':''}بيدفع: ${esc(uname(o.payerUid))}${o.deadline&&o.status==='open'?` · آخر معاد ${esc(o.deadline)}`:''}</div>
+    <div class="between" style="margin-top:8px"><span class="mut">${c.parts.length} شخص · ${c.its.length} صنف${mineIn?' · <b class="ok">طالب</b>':''}</span><span class="tot">${money(c.total)}</span></div>
+  </a>`;
+}
+function vHome(){
+  const t = myTotals();
+  const open = S.orders.filter(o => o.status==='open');
+  const today = S.orders.filter(o => o.status==='closed' && o.day===todayStr());
+  const pend = S.transfers.filter(x => x.toUid===me() && !x.confirmed);
+  return `
+  <div class="stats" style="margin-top:6px">
+    <a href="#money" class="stat ok"><small>ليك عند الناس</small><b>${money(t.owed)}</b></a>
+    <a href="#money" class="stat bad"><small>عليك للناس</small><b>${money(t.owe)}</b></a>
+  </div>
+  ${pend.length?`<a href="#transfers" class="card" style="display:block;margin-top:10px"><span class="pill warn">${pend.length}</span> تحويل محتاج تأكيدك إنه وصلك</a>`:''}
+  <div class="row" style="margin-top:12px">
+    <button class="btn" data-act="newOrder" data-id="${todayStr()}">+ طلبية النهارده</button>
+    <button class="btn" data-act="newOrder" data-id="${yesterdayStr()}">+ طلبية امبارح</button>
+    ${S.orders.find(o=>o.status!=='cancelled') ? `<button class="btn" data-act="cloneOrder" data-id="${S.orders.find(o=>o.status!=='cancelled').id}">كرر آخر طلبية</button>` : ''}
+    <button class="btn" data-act="newTransfer">+ تحويل</button>
+  </div>
+  <h2>طلبيات مفتوحة دلوقتي</h2>
+  ${open.length ? `<div class="grid">${open.map(orderCard).join('')}</div>` : '<div class="card empty">مفيش طلبية مفتوحة — اعمل واحدة من الزرار تحت</div>'}
+  ${today.length ? `<h2>اتطلبت النهارده</h2><div class="grid">${today.map(orderCard).join('')}</div>` : ''}
+  <button class="btn pri fab" data-act="newOrder">+ طلبية جديدة</button>`;
+}
+
+/* ---------- الطلبية ---------- */
+function summaryText(o){
+  const c = orderCalc(o), g = {};
+  for (const it of c.its){
+    const k = it.name.trim() + '||' + (it.note||'').trim();
+    (g[k] ??= { name:it.name.trim(), note:(it.note||'').trim(), qty:0 }).qty += +it.qty||0;
+  }
+  const lines = Object.values(g).sort((a,b)=>a.name.localeCompare(b.name,'ar')).map(x => `• ${r2(x.qty)} × ${x.name}${x.note?` (${x.note})`:''}`);
+  return `${o.title}${o.restaurantName?' — '+o.restaurantName:''}\n${lines.join('\n')}\n\nعدد الأصناف: ${lines.length} · الإجمالي: ${money(c.total)}`;
+}
+function vOrder(id){
+  const o = S.orders.find(x => x.id === id);
+  if (!o) return '<div class="card empty">الطلبية مش موجودة</div>';
+  const c = orderCalc(o), open = o.status === 'open', manage = o.createdBy===me() || o.payerUid===me();
+  const mine = c.parts.find(p => p.uid===me());
+  const people = c.parts.length ? c.parts.sort((a,b)=> (a.uid===me()?-1:b.uid===me()?1:0)).map(p => `
+    <div class="person">
+      <div class="between"><b>${esc(uname(p.uid))}${p.uid===me()?' (انت)':''}</b><b>${money(p.total)}</b></div>
+      ${p.items.map(it => `<div class="it"><span class="n">${r2(it.qty)} × ${esc(it.name)}${it.note?` <span class="note">— ${esc(it.note)}</span>`:''}</span>
+        <span class="p mut">${money(it.qty*it.price)}</span>
+        ${open && it.uid===me() ? `<button class="btn sm" data-act="qty" data-id="${o.id}" data-x="${it.id}|-1" title="قلّل">−</button><button class="btn sm" data-act="qty" data-id="${o.id}" data-x="${it.id}|1" title="زوّد">+</button><button class="btn sm" data-act="editItem" data-id="${o.id}" data-x="${it.id}">تعديل</button><button class="btn sm dan" data-act="delItem" data-id="${o.id}" data-x="${it.id}">حذف</button>`:''}</div>`).join('')}
+      ${c.share ? `<div class="it mut"><span class="n">نصيبه من التوصيل/الخدمة</span><span class="p">${money(c.share)}</span></div>` : ''}
+      ${o.status==='closed' && p.uid!==o.payerUid ? `<div class="mut" style="font-size:13px">عليه لـ ${esc(uname(o.payerUid))}: <b class="bad">${money(p.total)}</b></div>` : ''}
+    </div>`).join('') : '<div class="empty">لسه محدش طلب</div>';
+  return `
+  <div class="card">
+    <div class="between"><h3 style="font-size:19px">${esc(o.title)}</h3><span class="pill ${o.status}">${STATUS[o.status]}</span></div>
+    <div class="mut" style="font-size:14px">
+      ${o.restaurantName?`المكان: <b>${esc(o.restaurantName)}</b><br>`:''}
+      بيدفع: <b>${esc(uname(o.payerUid))}</b> · عملها: ${esc(uname(o.createdBy))} · ${dayLabel(o.day)} ${timeOf(o.createdAt)}
+      ${o.deadline?`<br>آخر معاد للطلب: <b>${esc(o.deadline)}</b>`:''}${o.note?`<br>${esc(o.note)}`:''}
+    </div>
+    <div class="between" style="margin-top:10px;border-top:1px solid var(--line);padding-top:10px">
+      <span class="mut">الأصناف ${money(c.subtotal)}${c.fee?` + توصيل/خدمة ${money(c.fee)}`:''}</span><b style="font-size:18px">${money(c.total)}</b></div>
+    ${mine ? `<div class="mut" style="margin-top:4px">طلبك: <b class="${o.payerUid===me()?'':'bad'}">${money(mine.total)}</b></div>`:''}
+    ${manage ? `<div class="row" style="margin-top:12px">
+      ${open ? `<button class="btn pri" data-act="setStatus" data-id="${o.id}" data-x="closed">اقفل الطلبية (اتطلبت)</button>` : o.status==='closed' ? `<button class="btn" data-act="setStatus" data-id="${o.id}" data-x="open">افتحها تاني</button>` : `<button class="btn" data-act="setStatus" data-id="${o.id}" data-x="open">رجّعها</button>`}
+      <button class="btn" data-act="editOrder" data-id="${o.id}">تعديل</button>
+      ${o.status!=='cancelled' ? `<button class="btn dan" data-act="setStatus" data-id="${o.id}" data-x="cancelled">إلغاء</button>`:''}
+    </div>` : ''}
+    <div class="row" style="margin-top:8px"><button class="btn sm" data-act="cloneOrder" data-id="${o.id}">اعمل زيها النهارده</button></div>
+  </div>
+  <div class="between" style="margin:14px 0 8px">
+    <div class="seg"><button class="${S.otab==='people'?'on':''}" data-act="otab" data-id="people">بالأشخاص</button><button class="${S.otab==='sum'?'on':''}" data-act="otab" data-id="sum">التجميع</button><button class="${S.otab==='notes'?'on':''}" data-act="otab" data-id="notes">ملاحظات${(S.notes[o.id]||[]).length?` (${S.notes[o.id].length})`:''}</button></div>
+    ${open ? `<div class="row">${lastMyItems(o).length ? `<button class="btn" data-act="repeatLast" data-id="${o.id}">كرر طلبي اللي فات</button>`:''}<button class="btn pri" data-act="addItem" data-id="${o.id}">+ أضف طلبك</button></div>` : ''}
+  </div>
+  ${S.otab==='people' ? `<div class="card">${people}</div>` : S.otab==='notes' ? vNotes(o) : `<div class="card">
+    <pre class="sum">${esc(summaryText(o))}</pre>
+    <div class="row"><button class="btn" data-act="copySum" data-id="${o.id}">انسخ</button>
+    <a class="btn" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(summaryText(o))}">ابعت واتساب</a></div></div>`}`;
+}
+
+function vNotes(o){
+  const ns = S.notes[o.id] || [];
+  return `<div class="card">
+    ${ns.length ? ns.map(n => `<div class="person"><div class="between"><b>${esc(uname(n.uid))}</b>
+      <span class="mut" style="font-size:12px">${timeOf(n.createdAt)}${n.uid===me()||isAdmin() ? ` · <a href="#" data-act="delNote" data-id="${o.id}" data-x="${n.id}" class="bad">حذف</a>`:''}</span></div>
+      <div style="white-space:pre-wrap">${esc(n.text)}</div></div>`).join('') : '<div class="empty">مفيش ملاحظات</div>'}
+    <div class="row" style="margin-top:8px"><button class="btn pri" data-act="addNote" data-id="${o.id}">+ ملاحظة</button></div></div>`;
+}
+
+/* ---------- كل الطلبيات ---------- */
+function vHistory(){
+  const q = S.q.trim();
+  let list = S.orders.filter(o => {
+    if (S.hf==='mine' && !(S.items[o.id]||[]).some(i=>i.uid===me())) return false;
+    if (S.hf==='paid' && o.payerUid!==me()) return false;
+    if (q && !((o.title||'')+' '+(o.restaurantName||'')+' '+uname(o.payerUid)).includes(q)) return false;
+    return true;
+  });
+  const days = {}; list.forEach(o => (days[o.day] ??= []).push(o));
+  const f = (k,l) => `<button class="${S.hf===k?'on':''}" data-act="hf" data-id="${k}">${l}</button>`;
+  return `<h2>كل الطلبيات</h2>
+  <div class="row" style="margin-bottom:6px"><div class="seg">${f('all','الكل')}${f('mine','شاركت فيها')}${f('paid','دفعتها')}</div></div>
+  <input id="hq" placeholder="دوّر بالاسم أو المكان أو اللي دفع" value="${esc(S.q)}">
+  ${Object.keys(days).length ? Object.entries(days).map(([d,os]) => `<div class="dayh">${dayLabel(d)}</div><div class="grid">${os.map(orderCard).join('')}</div>`).join('') : '<div class="card empty" style="margin-top:10px">مفيش نتايج</div>'}`;
+}
+document.addEventListener('input', e => { if (e.target.id==='hq'){ S.q = e.target.value; render(); } });
+
+/* ---------- الحساب ---------- */
+function vMoney(){
+  const { net, pair } = ledger(), mine = pair[me()] || {};
+  const rows = Object.entries(mine).filter(([,v]) => Math.abs(v) > 0.009).sort((a,b)=>a[1]-b[1]);
+  const pendOut = S.transfers.filter(t => t.fromUid===me() && !t.confirmed);
+  const others = Object.values(S.users).sort((a,b)=>(net[a.id]||0)-(net[b.id]||0));
+  return `<h2>حسابي مع الناس</h2>
+  <div class="card">${rows.length ? rows.map(([uid,v]) => {
+    const pay = S.users[uid]?.payInfo;
+    return `<div class="person"><div class="between">
+      <div>${v<0 ? `انت عليك لـ <b>${esc(uname(uid))}</b>` : `<b>${esc(uname(uid))}</b> عليه ليك`}
+      ${v<0 && pay ? `<div class="mut" style="font-size:13px">بيانات التحويل: ${esc(pay)} <a href="#" data-act="copyTxt" data-id="${esc(pay)}">نسخ</a></div>`:''}</div>
+      <div style="text-align:end"><b class="${v<0?'bad':'ok'}">${money(Math.abs(v))}</b>
+      ${v<0 ? `<div><button class="btn sm pri" data-act="newTransfer" data-id="${uid}" data-x="${r2(-v)}">سجّل إنك حوّلت</button></div>`:''}</div>
+    </div></div>`; }).join('') : '<div class="empty">حسابك صافي مع الكل</div>'}</div>
+  ${pendOut.length ? `<p class="mut" style="font-size:13px">عندك ${pendOut.length} تحويل مستني تأكيد — مش محسوب في الأرقام لحد ما يتأكد.</p>`:''}
+  <h2>رصيد الكل</h2>
+  <div class="card"><table><tr><th>الاسم</th><th class="num">الرصيد</th></tr>
+  ${others.map(u => { const v = r2(net[u.id]||0); return `<tr><td>${esc(u.name)}${u.id===me()?' (انت)':''}</td><td class="num ${v>0?'ok':v<0?'bad':'mut'}">${v>0?'ليه ':v<0?'عليه ':''}${money(Math.abs(v))}</td></tr>`; }).join('')}
+  </table><p class="mut" style="font-size:12px;margin-bottom:0">بيتحسب من الطلبيات المقفولة بس + التحويلات المتأكدة.</p></div>
+  <button class="btn pri fab" data-act="newTransfer">+ تحويل</button>`;
+}
+
+/* ---------- التحويلات ---------- */
+function vTransfers(){
+  const mine = S.transfers.filter(t => t.fromUid===me() || t.toUid===me());
+  const all = S.transfers.filter(t => !(t.fromUid===me() || t.toUid===me()));
+  const row = t => {
+    const toMe = t.toUid===me(), fromMe = t.fromUid===me();
+    return `<div class="person"><div class="between">
+      <div><b>${esc(uname(t.fromUid))}</b> حوّل لـ <b>${esc(uname(t.toUid))}</b>
+      <div class="mut" style="font-size:13px">${dayLabel(dayOfTs(t.createdAt))} ${timeOf(t.createdAt)}${t.note?' · '+esc(t.note):''}</div></div>
+      <div style="text-align:end"><b>${money(t.amount)}</b><div>${t.confirmed ? '<span class="pill closed">متأكد</span>' : '<span class="pill warn">مستني تأكيد</span>'}</div></div></div>
+      ${!t.confirmed && toMe ? `<div class="row" style="margin-top:6px"><button class="btn sm pri" data-act="confirmTr" data-id="${t.id}">وصلني</button><button class="btn sm dan" data-act="delTr" data-id="${t.id}">موصلش</button></div>`:''}
+      ${!t.confirmed && fromMe ? `<div class="row" style="margin-top:6px"><button class="btn sm dan" data-act="delTr" data-id="${t.id}">امسحه</button></div>`:''}
+    </div>`;
+  };
+  return `<h2>تحويلاتي</h2><div class="card">${mine.length ? mine.map(row).join('') : '<div class="empty">مفيش تحويلات</div>'}</div>
+  ${all.length ? `<h2>باقي التحويلات</h2><div class="card">${all.slice(0,50).map(row).join('')}</div>`:''}
+  <button class="btn pri fab" data-act="newTransfer">+ تحويل</button>`;
+}
+function dayOfTs(x){ const d = new Date(tsOf(x)); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+
+/* ---------- المنيوهات ---------- */
+function vMenus(){
+  return `<h2>المنيوهات</h2>
+  <p class="mut" style="margin-top:-4px">ضيف المطاعم وأسعارها مرة واحدة، وبعدها الطلب بيبقى بضغطة.</p>
+  ${S.rests.length ? `<div class="grid">${S.rests.map(r => `<div class="card">
+    <div class="between"><h3>${esc(r.name)}</h3><button class="btn sm" data-act="editRest" data-id="${r.id}">تعديل</button></div>
+    ${r.phone?`<div class="mut" style="font-size:13px"><a href="tel:${esc(r.phone)}">${esc(r.phone)}</a></div>`:''}
+    ${(r.items||[]).map(m=>`<div class="it"><span class="n">${esc(m.name)}</span><span class="p mut">${money(m.price)}</span></div>`).join('') || '<div class="mut">مفيش أصناف</div>'}
+  </div>`).join('')}</div>` : '<div class="card empty">مفيش منيوهات لسه</div>'}
+  <button class="btn pri fab" data-act="newRest">+ مطعم</button>`;
+}
+
+/* ---------- حسابي ---------- */
+function vProfile(){
+  const u = S.users[me()] || {};
+  return `<h2>حسابي</h2><div class="card">
+    <form id="profForm">
+      <label>الاسم<input name="name" required value="${esc(u.name||'')}"></label>
+      <label>بيانات التحويل ليك (انستاباي / محفظة / IBAN) — بتظهر للي عليه فلوس ليك<input name="payInfo" value="${esc(u.payInfo||'')}"></label>
+      <button class="btn pri" type="submit">حفظ</button>
+    </form></div>
+  ${vAdmin()}
+  <div class="card"><div class="between"><span class="mut">${esc(S.me.email)}</span><button class="btn dan" data-act="logout">خروج</button></div></div>`;
+}
+function vAdmin(){
+  if (S.admins === null) return `<div class="card"><h3>الإدارة</h3><p class="mut" style="margin-top:0">لسه محدش أدمن. أول واحد يضغط بيبقى الأدمن (يقدر يمسح البيانات القديمة ويضيف أدمنز).</p>
+    <button class="btn" data-act="claimAdmin">خليني الأدمن</button></div>`;
+  if (!isAdmin()) return '';
+  const old = d => S.orders.filter(o => o.day < d && o.status !== 'open');
+  return `<div class="card"><h3>الإدارة</h3>
+    <p class="mut" style="margin-top:0">الأدمنز: ${S.admins.map(uname).map(esc).join('، ')}</p>
+    <div class="row" style="margin-bottom:14px"><button class="btn sm" data-act="addAdmin">+ أدمن</button></div>
+    <h3>تنظيف البيانات القديمة (علشان الليمت المجاني)</h3>
+    <p class="mut" style="margin-top:0;font-size:13px">بيمسح الطلبيات المقفولة/الملغية والتحويلات المتأكدة الأقدم من المدة اللي تختارها — <b>والحساب مبيضيعش</b>: رصيد كل اتنين بيترحّل قبل المسح. الطلبيات المفتوحة والتحويلات اللي مستنية تأكيد مبتتمسحش.</p>
+    <div class="row">${[7,30,90].map(n => { const d = dayOfTs({toMillis:()=>Date.now()-n*864e5}); return `<button class="btn" data-act="cleanup" data-id="${n}">أقدم من ${n} يوم (${old(d).length})</button>`; }).join('')}</div>
+  </div>`;
+}
+document.addEventListener('submit', async e => {
+  if (e.target.id !== 'profForm') return;
+  e.preventDefault(); const f = new FormData(e.target);
+  try{
+    const name = f.get('name').trim();
+    await setDoc(doc(db,'users',me()), { name, email:S.me.email, payInfo:f.get('payInfo').trim() }, { merge:true });
+    await updateProfile(S.me, { displayName:name }); toast('اتحفظ');
+  }catch(err){ toast(errMsg(err)); }
+});
+
+/* ---------- النوافذ ---------- */
+function modal(title, body, onSubmit, submitLabel='حفظ'){
+  const m = $('#modal');
+  m.innerHTML = `<div class="sheet"><div class="mh"><b>${title}</b><button class="x" type="button" data-close>✕</button></div>
+    <form id="mf">${body}<div class="mfoot"><button class="btn pri" type="submit">${submitLabel}</button><button class="btn" type="button" data-close>إلغاء</button></div></form></div>`;
+  m.classList.remove('hidden');
+  const f = $('#mf'); setTimeout(()=>f.querySelector('input:not([type=hidden]),select')?.focus(), 50);
+  f.onsubmit = async e => {
+    e.preventDefault(); const btn = f.querySelector('[type=submit]'); btn.disabled = true;
+    try{ await onSubmit(new FormData(f)); closeModal(); }catch(err){ toast(errMsg(err)); btn.disabled = false; }
+  };
+}
+function closeModal(){ const m=$('#modal'); m.classList.add('hidden'); m.innerHTML=''; }
+const userOptions = (sel, skip) => Object.values(S.users).filter(u=>u.id!==skip).sort((a,b)=>(a.name||'').localeCompare(b.name||'','ar'))
+  .map(u => `<option value="${u.id}" ${u.id===sel?'selected':''}>${esc(u.name)}${u.id===me()?' (انت)':''}</option>`).join('');
+
+function orderForm(o = {}){
+  return `<div class="row2"><label>العنوان<input name="title" required value="${esc(o.title || 'فطار')}"></label>
+  <label>اليوم<input name="day" type="date" required max="${todayStr()}" value="${esc(o.day || todayStr())}"></label></div>
+  <label>المطعم<select name="restaurantId"><option value="">— مكان مش في المنيوهات —</option>${S.rests.map(r=>`<option value="${r.id}" ${o.restaurantId===r.id?'selected':''}>${esc(r.name)}</option>`).join('')}</select></label>
+  <label>اسم المكان (لو مش من المنيوهات)<input name="restaurantName" value="${esc(o.restaurantId ? '' : (o.restaurantName || ''))}"></label>
+  <label>مين هيدفع<select name="payerUid">${userOptions(o.payerUid || me())}</select></label>
+  <div class="row2"><label>توصيل / خدمة<input name="fee" type="number" step="any" min="0" value="${o.fee || 0}"></label>
+  <label>آخر معاد للطلب<input name="deadline" type="time" value="${esc(o.deadline || '')}"></label></div>
+  <label>ملاحظة<input name="note" value="${esc(o.note || '')}"></label>`;
+}
+function readOrderForm(f){
+  const rid = f.get('restaurantId'), r = S.rests.find(x=>x.id===rid);
+  return { title:f.get('title').trim(), day:f.get('day') || todayStr(), restaurantId:rid || '', restaurantName: r ? r.name : f.get('restaurantName').trim(),
+           payerUid:f.get('payerUid'), fee:+f.get('fee') || 0, deadline:f.get('deadline') || '', note:f.get('note').trim() };
+}
+function itemForm(o, it = {}){
+  const r = S.rests.find(x => x.id === o.restaurantId);
+  const chips = r?.items?.length ? `<div class="mut" style="font-size:13px;margin-bottom:4px">اختار من المنيو:</div><div class="chips">${r.items.map((m,i)=>`<button type="button" class="chip" data-act="pickMenu" data-id="${r.id}" data-x="${i}">${esc(m.name)} <small>${money(m.price)}</small></button>`).join('')}</div>` : '';
+  const hasPrev = !it.id && lastMyItems(o).length;
+  return `${chips}
+  <label>الصنف<input id="f_name" name="name" required value="${esc(it.name || '')}"></label>
+  <div class="row2"><label>العدد<input name="qty" type="number" min="0.1" step="any" required value="${it.qty || 1}"></label>
+  <label>سعر الواحدة<input id="f_price" name="price" type="number" min="0" step="any" required value="${it.price ?? ''}"></label></div>
+  <label>ملاحظة<input name="note" placeholder="مثلاً: من غير بصل" value="${esc(it.note || '')}"></label>
+  ${hasPrev ? `<p style="margin:0 0 10px"><a href="#" data-act="repeatLast" data-id="${o.id}">كرّر آخر طلب ليا (${hasPrev} صنف)</a></p>` : ''}`;
+}
+function lastMyItems(o){
+  const prev = S.orders.filter(x => x.id!==o.id && x.status!=='cancelled' && (S.items[x.id]||[]).some(i=>i.uid===me()));
+  const same = o.restaurantId ? prev.filter(x => x.restaurantId===o.restaurantId) : prev;
+  const src = (same[0] || prev[0]); // orders مترتبة من الأحدث
+  return src ? (S.items[src.id] || []).filter(i => i.uid===me()) : [];
+}
+
+/* ---------- الأوامر ---------- */
+const A = {
+  authMode: id => { S.authMode = id; doRender(); },
+  forgot: async () => {
+    const email = document.querySelector('#authForm [name=email]')?.value.trim();
+    if (!email) return toast('اكتب الإيميل الأول');
+    await sendPasswordResetEmail(auth, email); toast('اتبعتلك إيميل لتغيير الباسورد');
+  },
+  logout: () => signOut(auth),
+  otab: id => { S.otab = id; render(); },
+  hf: id => { S.hf = id; render(); },
+  copyTxt: id => copy(id),
+  copySum: id => copy(summaryText(S.orders.find(o=>o.id===id))),
+
+  newOrder: day => modal(day===yesterdayStr() ? 'طلبية امبارح' : 'طلبية جديدة', orderForm({ day: day || todayStr() }), async f => {
+    const ref = await addDoc(collection(db,'orders'), { ...readOrderForm(f), status:'open', createdBy:me(), createdAt:serverTimestamp() });
+    location.hash = 'order/' + ref.id;
+  }, 'افتح الطلبية'),
+  cloneOrder: id => { const o = S.orders.find(x=>x.id===id);
+    modal('طلبية زي دي', orderForm({ ...o, day:todayStr(), note:'' }), async f => {
+      const ref = await addDoc(collection(db,'orders'), { ...readOrderForm(f), status:'open', createdBy:me(), createdAt:serverTimestamp() });
+      location.hash = 'order/' + ref.id;
+    }, 'افتح الطلبية'); },
+  qty: async (oid, x) => {
+    const [iid, d] = x.split('|'), it = (S.items[oid]||[]).find(i=>i.id===iid); if (!it) return;
+    const q = r2((+it.qty||0) + (+d));
+    if (q <= 0){ if (confirm('تحذف الصنف ده؟')) await deleteDoc(doc(db,'orders',oid,'items',iid)); return; }
+    await updateDoc(doc(db,'orders',oid,'items',iid), { qty:q });
+  },
+  addNote: oid => modal('ملاحظة على الطلبية', '<label>الملاحظة<textarea name="text" rows="3" required></textarea></label>',
+    f => addDoc(collection(db,'orders',oid,'notes'), { uid:me(), text:f.get('text').trim(), createdAt:serverTimestamp() }), 'أضف'),
+  delNote: async (oid, nid) => { if (confirm('تحذف الملاحظة؟')) await deleteDoc(doc(db,'orders',oid,'notes',nid)); },
+  claimAdmin: () => setDoc(doc(db,'config','app'), { admins:[me()] }),
+  addAdmin: () => modal('إضافة أدمن', `<label>المستخدم<select name="u">${userOptions('', me())}</select></label>`,
+    f => updateDoc(doc(db,'config','app'), { admins:[...new Set([...(S.admins||[]), f.get('u')])] }), 'أضف'),
+  cleanup: async days => {
+    const cut = dayOfTs({ toMillis:()=>Date.now() - (+days)*864e5 }), cutMs = Date.now() - (+days)*864e5;
+    const orders = S.orders.filter(o => o.day < cut && o.status !== 'open');
+    const trs = S.transfers.filter(t => t.confirmed && tsOf(t.createdAt) < cutMs);
+    if (!orders.length && !trs.length) return toast('مفيش بيانات قديمة');
+    if (!confirm(`هيتمسح ${orders.length} طلبية و${trs.length} تحويل أقدم من ${days} يوم، والأرصدة هتترحّل. متأكد؟`)) return;
+    // كل دفعة ذرّية: الترحيل + المسح مع بعض — لو دفعة فشلت مفيش ازدواج في الحساب
+    const units = [...orders.map(o => ({ o })), ...trs.map(t => ({ t }))];
+    let batch = writeBatch(db), ops = 0, inc = {}, done = 0;
+    const flush = async () => {
+      if (!ops) return;
+      const upd = {}; for (const [k,v] of Object.entries(inc)) if (Math.abs(v) > 0.0001) upd[k] = increment(r2(v));
+      if (Object.keys(upd).length) batch.set(doc(db,'carry','pairs'), { pairs: Object.fromEntries(Object.entries(upd)) }, { merge:true });
+      await batch.commit(); batch = writeBatch(db); ops = 0; inc = {};
+    };
+    for (const u of units){
+      const refs = [];
+      if (u.o){
+        (S.items[u.o.id] || []).forEach(i => refs.push(doc(db,'orders',u.o.id,'items',i.id)));
+        (await getDocs(collection(db,'orders',u.o.id,'notes'))).forEach(n => refs.push(n.ref));
+        refs.push(doc(db,'orders',u.o.id));
+      } else refs.push(doc(db,'transfers',u.t.id));
+      if (ops + refs.length > 400) await flush();
+      const c = contribution(u.o ? [u.o] : [], u.t ? [u.t] : []);
+      for (const [k,v] of Object.entries(c)) inc[k] = (inc[k]||0) + v;
+      refs.forEach(r => batch.delete(r)); ops += refs.length; done++;
+    }
+    await flush();
+    toast(`اتمسح ${done} سجل والأرصدة اترحّلت`);
+  },
+  editOrder: id => { const o = S.orders.find(x=>x.id===id); modal('تعديل الطلبية', orderForm(o), f => updateDoc(doc(db,'orders',id), readOrderForm(f))); },
+  setStatus: async (id, st) => {
+    const msg = { closed:'تقفل الطلبية؟ محدش هيقدر يضيف أو يعدّل بعدها، والحساب هيتسجّل.', cancelled:'تلغي الطلبية؟ مش هتتحسب على حد.', open:'تفتح الطلبية تاني؟' }[st];
+    if (!confirm(msg)) return;
+    await updateDoc(doc(db,'orders',id), { status:st, ...(st==='closed'?{closedAt:serverTimestamp()}:{}) });
+  },
+
+  addItem: id => { const o = S.orders.find(x=>x.id===id); modal('أضف طلبك', itemForm(o), f => addDoc(collection(db,'orders',id,'items'), {
+      uid:me(), orderId:id, name:f.get('name').trim(), qty:+f.get('qty'), price:+f.get('price'), note:f.get('note').trim(), createdAt:serverTimestamp() }), 'أضف'); },
+  editItem: (oid, iid) => { const o = S.orders.find(x=>x.id===oid), it = (S.items[oid]||[]).find(x=>x.id===iid);
+    modal('تعديل الصنف', itemForm(o, it), f => updateDoc(doc(db,'orders',oid,'items',iid), { name:f.get('name').trim(), qty:+f.get('qty'), price:+f.get('price'), note:f.get('note').trim() })); },
+  delItem: async (oid, iid) => { if (confirm('تحذف الصنف ده؟')) await deleteDoc(doc(db,'orders',oid,'items',iid)); },
+  pickMenu: (rid, i) => { const m = S.rests.find(r=>r.id===rid)?.items?.[+i]; if (!m) return; $('#f_name').value = m.name; $('#f_price').value = m.price; },
+  repeatLast: async id => {
+    const o = S.orders.find(x=>x.id===id), its = lastMyItems(o); if (!its.length) return;
+    const b = writeBatch(db);
+    its.forEach(it => b.set(doc(collection(db,'orders',id,'items')), { uid:me(), orderId:id, name:it.name, qty:+it.qty, price:+it.price, note:it.note||'', createdAt:serverTimestamp() }));
+    await b.commit(); closeModal(); toast(`اتضاف ${its.length} صنف`);
+  },
+
+  newTransfer: (to, amt) => modal('سجّل تحويل عملته', `
+    <label>حوّلت لـ<select name="to" required>${userOptions(to, me())}</select></label>
+    <label>المبلغ<input name="amount" type="number" min="0.01" step="any" required value="${amt || ''}"></label>
+    <label>ملاحظة<input name="note" placeholder="مثلاً: انستاباي"></label>
+    <p class="mut" style="font-size:13px;margin-top:0">التحويل مش بيتحسب غير لما اللي استلم يأكد إنه وصله.</p>`,
+    f => addDoc(collection(db,'transfers'), { fromUid:me(), toUid:f.get('to'), amount:+f.get('amount'), note:f.get('note').trim(), confirmed:false, createdAt:serverTimestamp() }), 'سجّل'),
+  confirmTr: id => updateDoc(doc(db,'transfers',id), { confirmed:true, confirmedAt:serverTimestamp() }),
+  delTr: async id => { if (confirm('تمسح التحويل ده؟')) await deleteDoc(doc(db,'transfers',id)); },
+
+  newRest: () => restModal(),
+  editRest: id => restModal(S.rests.find(r=>r.id===id)),
+};
+function restModal(r = {}){
+  const lines = (r.items||[]).map(m => `${m.name} | ${m.price}`).join('\n');
+  modal(r.id ? 'تعديل المطعم' : 'مطعم جديد', `
+    <label>الاسم<input name="name" required value="${esc(r.name||'')}"></label>
+    <label>التليفون<input name="phone" type="tel" value="${esc(r.phone||'')}"></label>
+    <label>الأصناف — كل صنف في سطر: الاسم | السعر<textarea name="items" rows="8" placeholder="فول | 5&#10;طعمية | 2">${esc(lines)}</textarea></label>`,
+    async f => {
+      const items = f.get('items').split('\n').map(l => l.trim()).filter(Boolean).map(l => {
+        const m = l.match(/^(.*?)\s*[|:،,\-–]\s*([\d.]+)\s*$/); return m ? { name:m[1].trim(), price:+m[2] } : { name:l, price:0 };
+      });
+      const data = { name:f.get('name').trim(), phone:f.get('phone').trim(), items };
+      if (r.id) await updateDoc(doc(db,'restaurants',r.id), data);
+      else await addDoc(collection(db,'restaurants'), { ...data, createdBy:me(), createdAt:serverTimestamp() });
+    });
+}
+
+document.addEventListener('click', async e => {
+  if (e.target.closest('[data-close]') || e.target.id === 'modal') return closeModal();
+  const t = e.target.closest('[data-act]'); if (!t) return;
+  e.preventDefault();
+  try{ await A[t.dataset.act]?.(t.dataset.id, t.dataset.x, t); }catch(err){ toast(errMsg(err)); }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+window.addEventListener('hashchange', () => { S.otab = 'people'; render(); window.scrollTo(0,0); });
+
+onAuthStateChanged(auth, user => {
+  stopListeners(); S.me = user; closeModal();
+  if (user) startListeners();
+  doRender();
+});
+</script>
+</body>
+</html>
