@@ -1,0 +1,78 @@
+rules_version = '2';
+// قواعد الأمان: الكل يشوف كل حاجة، وكل واحد يعدّل حاجته بس.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isMe(uid) { return signedIn() && request.auth.uid == uid; }
+    function cfg() { return /databases/$(database)/documents/config/app; }
+    function isAdmin() { return signedIn() && exists(cfg()) && request.auth.uid in get(cfg()).data.admins; }
+    function orderOpen(orderId) { return get(/databases/$(database)/documents/orders/$(orderId)).data.status == 'open'; }
+    function validItem(d) { return d.name is string && d.name.size() > 0 && d.qty is number && d.qty > 0 && d.price is number && d.price >= 0; }
+
+    // المستخدمين: كل واحد يعدّل بروفايله بس
+    match /users/{uid} {
+      allow read: if signedIn();
+      allow create, update: if isMe(uid);
+    }
+
+    // الإعدادات: أول واحد بيعمل نفسه أدمن، وبعدها الأدمن بس يعدّل
+    match /config/app {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.admins == [request.auth.uid];
+      allow update: if isAdmin();
+    }
+
+    // الأرصدة المرحّلة بعد التنظيف — الأدمن بس
+    match /carry/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    // الطلبيات: اللي عملها أو اللي بيدفع يديرها · المسح للأدمن بس (التنظيف)
+    match /orders/{orderId} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.createdBy == request.auth.uid && request.resource.data.status == 'open';
+      allow update: if signedIn() && request.resource.data.createdBy == resource.data.createdBy
+                    && (resource.data.createdBy == request.auth.uid || resource.data.payerUid == request.auth.uid);
+      allow delete: if isAdmin();
+
+      // الأصناف: كل واحد طلبه بس، وطول ما الطلبية مفتوحة
+      match /items/{itemId} {
+        allow create: if isMe(request.resource.data.uid) && validItem(request.resource.data) && orderOpen(orderId);
+        allow update: if isMe(resource.data.uid) && request.resource.data.uid == resource.data.uid
+                      && validItem(request.resource.data) && orderOpen(orderId);
+        allow delete: if (isMe(resource.data.uid) && orderOpen(orderId)) || isAdmin();
+      }
+
+      // الملاحظات: أي حد يضيف، صاحبها أو الأدمن يمسح
+      match /notes/{noteId} {
+        allow read: if signedIn();
+        allow create: if isMe(request.resource.data.uid) && request.resource.data.text is string && request.resource.data.text.size() > 0;
+        allow delete: if isMe(resource.data.uid) || isAdmin();
+      }
+    }
+
+    // قراءة كل الأصناف مرة واحدة (collectionGroup)
+    match /{path=**}/items/{itemId} {
+      allow read: if signedIn();
+    }
+
+    // التحويلات: اللي حوّل يسجّل · اللي استلم بس يأكد · المسح قبل التأكيد أو للأدمن
+    match /transfers/{tid} {
+      allow read: if signedIn();
+      allow create: if isMe(request.resource.data.fromUid) && request.resource.data.confirmed == false
+                    && request.resource.data.amount is number && request.resource.data.amount > 0
+                    && request.resource.data.toUid != request.auth.uid;
+      allow update: if isMe(resource.data.toUid)
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['confirmed', 'confirmedAt'])
+                    && request.resource.data.confirmed == true;
+      allow delete: if ((isMe(resource.data.fromUid) || isMe(resource.data.toUid)) && resource.data.confirmed == false) || isAdmin();
+    }
+
+    // المنيوهات: مشتركة للكل · المسح لصاحبها
+    match /restaurants/{rid} {
+      allow read, create, update: if signedIn();
+      allow delete: if isMe(resource.data.createdBy) || isAdmin();
+    }
+  }
+}
