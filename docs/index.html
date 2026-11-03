@@ -377,7 +377,7 @@ function vOrder(id){
     <div class="seg"><button class="${S.otab==='people'?'on':''}" data-act="otab" data-id="people">بالأشخاص</button><button class="${S.otab==='sum'?'on':''}" data-act="otab" data-id="sum">التجميع</button><button class="${S.otab==='notes'?'on':''}" data-act="otab" data-id="notes">ملاحظات${(S.notes[o.id]||[]).length?` (${S.notes[o.id].length})`:''}</button></div>
     ${open ? `<div class="row">${lastMyItems(o).length ? `<button class="btn" data-act="repeatLast" data-id="${o.id}">كرر طلبي اللي فات</button>`:''}<button class="btn pri" data-act="addItem" data-id="${o.id}">+ أضف طلبك</button></div>` : ''}
   </div>
-  ${open ? `<div class="card"><div class="mut" style="font-size:13px;margin-bottom:6px">اختار بضغطة (كل ضغطة = واحد زيادة) · <a href="#" data-act="editCatalog" style="color:var(--pri);font-weight:600">الأسعار</a></div><div class="chips" style="margin:0">${quickList(o).map(m => { const q = (S.items[o.id]||[]).filter(i=>i.uid===me() && i.name===m.name && !i.note).reduce((a,i)=>a+(+i.qty||0),0); return `<button class="chip ${q?'on':''}" data-act="quick" data-id="${o.id}" data-x="${esc(m.name)}">${esc(m.name)}${m.price?` <small>${money(m.price)}</small>`:''}${q?` <b>×${r2(q)}</b>`:''}</button>`; }).join('')}</div></div>` : ''}
+  ${open ? `<div class="card"><div class="mut" style="font-size:13px;margin-bottom:6px">اختار بضغطة (كل ضغطة = واحد زيادة) · <a href="#" data-act="editCatalog" style="color:var(--pri);font-weight:600">الأسعار</a></div>${quickList(o).length > 12 ? `<input id="qq" placeholder="دوّر على صنف" value="${esc(S.qq||'')}" style="margin:0 0 8px">` : ''}<div class="chips" style="margin:0;max-height:260px;overflow:auto">${quickList(o).filter(m => !S.qq || m.name.includes(S.qq.trim())).map(m => { const q = (S.items[o.id]||[]).filter(i=>i.uid===me() && i.name===m.name && !i.note).reduce((a,i)=>a+(+i.qty||0),0); return `<button class="chip ${q?'on':''}" data-act="quick" data-id="${o.id}" data-x="${esc(m.name)}">${esc(m.name)}${m.price?` <small>${money(m.price)}</small>`:''}${q?` <b>×${r2(q)}</b>`:''}</button>`; }).join('')}</div></div>` : ''}
   ${S.otab==='people' ? `<div class="card">${people}</div>` : S.otab==='notes' ? vNotes(o) : `<div class="card">
     <pre class="sum">${esc(summaryText(o))}</pre>
     <div class="row"><button class="btn" data-act="copySum" data-id="${o.id}">انسخ</button>
@@ -409,7 +409,11 @@ function vHistory(){
   <input id="hq" placeholder="دوّر بالاسم أو المكان أو اللي دفع" value="${esc(S.q)}">
   ${Object.keys(days).length ? Object.entries(days).map(([d,os]) => `<div class="dayh">${dayLabel(d)}</div><div class="grid">${os.map(orderCard).join('')}</div>`).join('') : '<div class="card empty" style="margin-top:10px">مفيش نتايج</div>'}`;
 }
-document.addEventListener('input', e => { if (e.target.id==='hq'){ S.q = e.target.value; render(); } });
+document.addEventListener('input', e => {
+  if (e.target.id==='hq'){ S.q = e.target.value; render(); }
+  if (e.target.id==='qq'){ S.qq = e.target.value; render(); }
+  if (e.target.id==='rowq'){ const q = e.target.value.trim(); document.querySelectorAll('#prows .prow').forEach(r => { const n = r.querySelector('input').value; r.style.display = !q || n.includes(q) || !n ? '' : 'none'; }); }
+});
 
 /* ---------- الحساب ---------- */
 function vMoney(){
@@ -639,6 +643,8 @@ const A = {
     await addDoc(collection(db,'orders',oid,'items'), { uid:me(), orderId:oid, name, qty:1, price, note:'', createdAt:serverTimestamp() });
     toast(`اتضاف ${name}`);
   },
+  addRow: () => { $('#prows').insertAdjacentHTML('beforeend', priceRow()); const ins = $('#prows').querySelectorAll('input[name^="n_"]'); ins[ins.length-1].focus(); },
+  bulkRows: () => { const b = $('#bulkbox'); b.style.display = 'block'; b.querySelector('textarea').focus(); },
   editCatalog: () => modal('الأصناف والأسعار', `
     <p class="mut" style="margin-top:0;font-size:13px">اكتب سعر كل صنف مرة واحدة. لو مطعم معيّن سعره مختلف، عدّله من منيو المطعم. سيب الاسم فاضي علشان تمسح الصنف.</p>
     ${priceRows(S.catalog)}`,
@@ -669,17 +675,21 @@ function parseLines(txt){
   }).filter(x => x.name);
 }
 // جدول أسعار: صف لكل صنف + 3 صفوف فاضية لأصناف جديدة
+// جدول أسعار: صف لكل صنف + زرار يضيف صفوف بلا حد + بحث + إضافة كذا صنف مرة واحدة
+let rowSeq = 0;
+const priceRow = (m = {}) => { const i = rowSeq++; return `<div class="prow" style="display:grid;grid-template-columns:1fr 110px;gap:10px;margin-bottom:6px"><input name="n_${i}" value="${esc(m.name||'')}" placeholder="اسم الصنف" style="margin:0"><input name="p_${i}" type="number" min="0" step="any" value="${+m.price ? m.price : ''}" placeholder="السعر" style="margin:0"></div>`; };
 function priceRows(items){
-  const rows = [...items, {name:'',price:''}, {name:'',price:''}, {name:'',price:''}];
-  return `<div style="display:grid;grid-template-columns:1fr 110px;gap:6px 10px;align-items:center">
-    <span class="mut" style="font-size:13px">الصنف</span><span class="mut" style="font-size:13px">السعر (${CURRENCY})</span>
-    ${rows.map((m,i) => `<input name="n_${i}" value="${esc(m.name)}" placeholder="صنف جديد" style="margin:0"><input name="p_${i}" type="number" min="0" step="any" value="${+m.price ? m.price : ''}" placeholder="—" style="margin:0">`).join('')}
-  </div><input type="hidden" name="rows" value="${rows.length}"><div style="height:10px"></div>`;
+  return `${items.length > 8 ? `<input id="rowq" placeholder="دوّر على صنف (${items.length} صنف)" style="margin:0 0 10px">` : ''}
+    <div style="display:grid;grid-template-columns:1fr 110px;gap:10px"><span class="mut" style="font-size:13px">الصنف</span><span class="mut" style="font-size:13px">السعر (${CURRENCY})</span></div>
+    <div id="prows">${items.map(priceRow).join('')}${priceRow()}</div>
+    <div class="row" style="margin:4px 0 12px"><button type="button" class="btn sm" data-act="addRow">+ صنف جديد</button><button type="button" class="btn sm" data-act="bulkRows">+ كذا صنف مرة واحدة</button></div>
+    <label id="bulkbox" style="display:none">الصق أو اكتب الأصناف — كل صنف في سطر: الاسم | السعر<textarea name="bulk" rows="6" placeholder="فول | 10&#10;طعمية | 3&#10;عيش | 1"></textarea></label>`;
 }
 function readPriceRows(f){
-  const out = [], seen = new Set();
-  for (let i = 0; i < +f.get('rows'); i++){ const name = (f.get('n_'+i)||'').trim(); if (!name || seen.has(name)) continue; seen.add(name); out.push({ name, price: +f.get('p_'+i) || 0 }); }
-  return out;
+  const out = new Map();
+  for (const [k, v] of f.entries()){ if (!k.startsWith('n_')) continue; const name = String(v).trim(); if (name && !out.has(name)) out.set(name, +f.get('p_' + k.slice(2)) || 0); }
+  for (const m of parseLines(f.get('bulk'))) if (!out.has(m.name) || m.price) out.set(m.name, m.price || out.get(m.name) || 0);
+  return [...out].map(([name, price]) => ({ name, price }));
 }
 // إضافة صنف من الفورم + حفظ سعره لو كان ناقص أو اتغيّر (علشان يتكتب مرة واحدة)
 async function addItemFromForm(o, f){
