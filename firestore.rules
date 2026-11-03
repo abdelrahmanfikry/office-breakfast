@@ -68,9 +68,14 @@ service cloud.firestore {
       allow create: if isMe(request.resource.data.fromUid) && request.resource.data.confirmed == false
                     && request.resource.data.amount is number && request.resource.data.amount > 0
                     && request.resource.data.toUid != request.auth.uid;
-      allow update: if isMe(resource.data.toUid)
-                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['confirmed', 'confirmedAt'])
-                    && request.resource.data.confirmed == true;
+      // المستلم: يأكد «وصلني» أو يقول «موصلش» (بيفضل ظاهر للكل) · المحوّل: «والله حوّلت» يرجّعه للتأكيد
+      allow update: if resource.data.confirmed == false && (
+                      (isMe(resource.data.toUid)
+                        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['confirmed', 'confirmedAt', 'rejected', 'rejectedAt'])
+                        && (request.resource.data.confirmed == true || request.resource.data.rejected == true))
+                   || (isMe(resource.data.fromUid)
+                        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rejected', 'rejectedAt'])
+                        && request.resource.data.rejected == false));
       allow delete: if ((isMe(resource.data.fromUid) || isMe(resource.data.toUid)) && resource.data.confirmed == false) || isAdmin();
     }
 
