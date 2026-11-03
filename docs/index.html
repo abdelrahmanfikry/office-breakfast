@@ -665,6 +665,7 @@ const A = {
 
   newTransfer: (to, amt) => modal('سجّل تحويل عملته', `
     <label>حوّلت لـ<select name="to" required>${userOptions(to, me())}</select></label>
+    <div id="paybox">${payBox(to || Object.values(S.users).filter(u=>u.id!==me()).sort((a,b)=>(a.name||'').localeCompare(b.name||'','ar'))[0]?.id)}</div>
     <label>المبلغ<input name="amount" type="number" min="0.01" step="any" required value="${amt || ''}"></label>
     <label>ملاحظة<input name="note" placeholder="مثلاً: انستاباي"></label>
     <p class="mut" style="font-size:13px;margin-top:0">التحويل مش بيتحسب غير لما اللي استلم يأكد إنه وصله.</p>`,
@@ -752,6 +753,13 @@ document.addEventListener('click', async e => {
   try{ await A[t.dataset.act]?.(t.dataset.id, t.dataset.x, t); }catch(err){ toast(errMsg(err)); }
 });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+// رقم التحويل (انستاباي/محفظة) بيتغيّر مع اختيار الشخص
+document.addEventListener('change', e => { if (e.target.matches('#mf select[name=to]')) { const b = $('#paybox'); if (b) b.innerHTML = payBox(e.target.value); } });
+function payBox(uid){
+  const p = S.users[uid]?.payInfo;
+  return p ? `<div class="card" style="background:var(--pri2);border-color:var(--pri);margin:0 0 10px;padding:10px 12px"><div class="between"><div><div class="mut" style="font-size:12px">حوّل على (انستاباي / محفظة):</div><b style="font-size:17px;direction:ltr;unicode-bidi:embed">${esc(p)}</b></div><button type="button" class="btn sm pri" data-act="copyTxt" data-id="${esc(p)}">نسخ</button></div></div>`
+           : `<div class="mut" style="font-size:13px;margin:-4px 0 10px">${esc(uname(uid))} لسه مكتبش رقم التحويل بتاعه — يكتبه من «حسابي».</div>`;
+}
 window.addEventListener('hashchange', () => { S.otab = 'people'; render(); window.scrollTo(0,0); });
 
 onAuthStateChanged(auth, user => {
