@@ -377,7 +377,7 @@ function vOrder(id){
     <div class="seg"><button class="${S.otab==='people'?'on':''}" data-act="otab" data-id="people">بالأشخاص</button><button class="${S.otab==='sum'?'on':''}" data-act="otab" data-id="sum">التجميع</button><button class="${S.otab==='notes'?'on':''}" data-act="otab" data-id="notes">ملاحظات${(S.notes[o.id]||[]).length?` (${S.notes[o.id].length})`:''}</button></div>
     ${open ? `<div class="row">${lastMyItems(o).length ? `<button class="btn" data-act="repeatLast" data-id="${o.id}">كرر طلبي اللي فات</button>`:''}<button class="btn pri" data-act="addItem" data-id="${o.id}">+ أضف طلبك</button></div>` : ''}
   </div>
-  ${open ? `<div class="card"><div class="mut" style="font-size:13px;margin-bottom:6px">اختار بضغطة (كل ضغطة = واحد زيادة):</div><div class="chips" style="margin:0">${quickList(o).map(m => { const q = (S.items[o.id]||[]).filter(i=>i.uid===me() && i.name===m.name && !i.note).reduce((a,i)=>a+(+i.qty||0),0); return `<button class="chip ${q?'on':''}" data-act="quick" data-id="${o.id}" data-x="${esc(m.name)}">${esc(m.name)}${m.price?` <small>${money(m.price)}</small>`:''}${q?` <b>×${r2(q)}</b>`:''}</button>`; }).join('')}</div></div>` : ''}
+  ${open ? `<div class="card"><div class="mut" style="font-size:13px;margin-bottom:6px">اختار بضغطة (كل ضغطة = واحد زيادة) · <a href="#" data-act="editCatalog" style="color:var(--pri);font-weight:600">الأسعار</a></div><div class="chips" style="margin:0">${quickList(o).map(m => { const q = (S.items[o.id]||[]).filter(i=>i.uid===me() && i.name===m.name && !i.note).reduce((a,i)=>a+(+i.qty||0),0); return `<button class="chip ${q?'on':''}" data-act="quick" data-id="${o.id}" data-x="${esc(m.name)}">${esc(m.name)}${m.price?` <small>${money(m.price)}</small>`:''}${q?` <b>×${r2(q)}</b>`:''}</button>`; }).join('')}</div></div>` : ''}
   ${S.otab==='people' ? `<div class="card">${people}</div>` : S.otab==='notes' ? vNotes(o) : `<div class="card">
     <pre class="sum">${esc(summaryText(o))}</pre>
     <div class="row"><button class="btn" data-act="copySum" data-id="${o.id}">انسخ</button>
@@ -457,7 +457,7 @@ function dayOfTs(x){ const d = new Date(tsOf(x)); return `${d.getFullYear()}-${S
 /* ---------- المنيوهات ---------- */
 function vMenus(){
   return `<h2>المنيوهات</h2>
-  <div class="card"><div class="between"><h3>الأصناف الثابتة</h3><button class="btn sm" data-act="editCatalog">تعديل</button></div>
+  <div class="card"><div class="between"><h3>الأصناف الثابتة</h3><button class="btn sm pri" data-act="editCatalog">الأسعار</button></div>
     <div class="chips" style="margin:6px 0 0">${S.catalog.map(m => `<span class="chip">${esc(m.name)}${m.price?` <small>${money(m.price)}</small>`:''}</span>`).join('')}</div>
     <p class="mut" style="font-size:12px;margin:8px 0 0">بتظهر في كل طلبية للاختيار بضغطة. لو المطعم ليه سعر تاني للصنف، اكتبه في منيو المطعم وهو اللي هيتحسب.</p></div>
   <p class="mut">ضيف المطاعم وأسعارها مرة واحدة، وبعدها الطلب بيبقى بضغطة.</p>
@@ -625,8 +625,7 @@ const A = {
     await updateDoc(doc(db,'orders',id), { status:st, ...(st==='closed'?{closedAt:serverTimestamp()}:{}) });
   },
 
-  addItem: id => { const o = S.orders.find(x=>x.id===id); modal('أضف طلبك', itemForm(o), f => addDoc(collection(db,'orders',id,'items'), {
-      uid:me(), orderId:id, name:f.get('name').trim(), qty:+f.get('qty'), price:+f.get('price'), note:f.get('note').trim(), createdAt:serverTimestamp() }), 'أضف'); },
+  addItem: id => { const o = S.orders.find(x=>x.id===id); modal('أضف طلبك', itemForm(o), f => addItemFromForm(o, f), 'أضف'); },
   editItem: (oid, iid) => { const o = S.orders.find(x=>x.id===oid), it = (S.items[oid]||[]).find(x=>x.id===iid);
     modal('تعديل الصنف', itemForm(o, it), f => updateDoc(doc(db,'orders',oid,'items',iid), { name:f.get('name').trim(), qty:+f.get('qty'), price:+f.get('price'), note:f.get('note').trim() })); },
   delItem: async (oid, iid) => { if (confirm('تحذف الصنف ده؟')) await deleteDoc(doc(db,'orders',oid,'items',iid)); },
@@ -636,15 +635,14 @@ const A = {
     const mine = (S.items[oid]||[]).find(i => i.uid===me() && i.name===name && !i.note);
     if (mine) { await updateDoc(doc(db,'orders',oid,'items',mine.id), { qty: r2((+mine.qty||0) + 1) }); return toast(`${name}: ${r2((+mine.qty||0)+1)}`); }
     const price = priceFor(o, name);
-    if (!price) return modal('سعر ' + esc(name), itemForm(o, { name }), f => addDoc(collection(db,'orders',oid,'items'), {
-      uid:me(), orderId:oid, name:f.get('name').trim(), qty:+f.get('qty'), price:+f.get('price'), note:f.get('note').trim(), createdAt:serverTimestamp() }), 'أضف');
+    if (!price) return modal('سعر ' + esc(name), `<p class="mut" style="margin-top:0;font-size:13px">اكتب السعر مرة واحدة — هيتحفظ وبعد كده الصنف هيتضاف بضغطة.</p>` + itemForm(o, { name }), f => addItemFromForm(o, f), 'أضف');
     await addDoc(collection(db,'orders',oid,'items'), { uid:me(), orderId:oid, name, qty:1, price, note:'', createdAt:serverTimestamp() });
     toast(`اتضاف ${name}`);
   },
-  editCatalog: () => modal('الأصناف الثابتة', `
-    <p class="mut" style="margin-top:0;font-size:13px">كل صنف في سطر: الاسم | السعر الافتراضي. السعر ممكن يتساب فاضي، وسعر المطعم (من المنيو بتاعه) بيغلب عليه.</p>
-    <label>الأصناف<textarea name="items" rows="10">${esc(S.catalog.map(m => m.price ? `${m.name} | ${m.price}` : m.name).join('\n'))}</textarea></label>`,
-    f => setDoc(doc(db,'config','catalog'), { items: parseLines(f.get('items')), updatedBy:me(), updatedAt:serverTimestamp() })),
+  editCatalog: () => modal('الأصناف والأسعار', `
+    <p class="mut" style="margin-top:0;font-size:13px">اكتب سعر كل صنف مرة واحدة. لو مطعم معيّن سعره مختلف، عدّله من منيو المطعم. سيب الاسم فاضي علشان تمسح الصنف.</p>
+    ${priceRows(S.catalog)}`,
+    f => setDoc(doc(db,'config','catalog'), { items: readPriceRows(f), updatedBy:me(), updatedAt:serverTimestamp() })),
   repeatLast: async id => {
     const o = S.orders.find(x=>x.id===id), its = lastMyItems(o); if (!its.length) return;
     const b = writeBatch(db);
@@ -670,6 +668,37 @@ function parseLines(txt){
     const m = l.match(/^(.*?)\s*[|:،,\-–]\s*([\d.]+)\s*$/); return m ? { name:m[1].trim(), price:+m[2] } : { name:l.replace(/[|:،,\-–]\s*$/,'').trim(), price:0 };
   }).filter(x => x.name);
 }
+// جدول أسعار: صف لكل صنف + 3 صفوف فاضية لأصناف جديدة
+function priceRows(items){
+  const rows = [...items, {name:'',price:''}, {name:'',price:''}, {name:'',price:''}];
+  return `<div style="display:grid;grid-template-columns:1fr 110px;gap:6px 10px;align-items:center">
+    <span class="mut" style="font-size:13px">الصنف</span><span class="mut" style="font-size:13px">السعر (${CURRENCY})</span>
+    ${rows.map((m,i) => `<input name="n_${i}" value="${esc(m.name)}" placeholder="صنف جديد" style="margin:0"><input name="p_${i}" type="number" min="0" step="any" value="${+m.price ? m.price : ''}" placeholder="—" style="margin:0">`).join('')}
+  </div><input type="hidden" name="rows" value="${rows.length}"><div style="height:10px"></div>`;
+}
+function readPriceRows(f){
+  const out = [], seen = new Set();
+  for (let i = 0; i < +f.get('rows'); i++){ const name = (f.get('n_'+i)||'').trim(); if (!name || seen.has(name)) continue; seen.add(name); out.push({ name, price: +f.get('p_'+i) || 0 }); }
+  return out;
+}
+// إضافة صنف من الفورم + حفظ سعره لو كان ناقص أو اتغيّر (علشان يتكتب مرة واحدة)
+async function addItemFromForm(o, f){
+  const name = f.get('name').trim(), price = +f.get('price');
+  await addDoc(collection(db,'orders',o.id,'items'), { uid:me(), orderId:o.id, name, qty:+f.get('qty'), price, note:f.get('note').trim(), createdAt:serverTimestamp() });
+  await savePrice(o, name, price).catch(()=>{});
+}
+async function savePrice(o, name, price){
+  if (!price || price === priceFor(o, name)) return;
+  const r = S.rests.find(x => x.id === o.restaurantId);
+  if (r){ // سعر خاص بالمطعم
+    const items = (r.items||[]).map(m => ({...m})), m = items.find(x => x.name === name);
+    if (m) m.price = price; else items.push({ name, price });
+    await updateDoc(doc(db,'restaurants',r.id), { items });
+  }
+  const cat = S.catalog.map(m => ({...m})), c = cat.find(m => m.name === name);
+  if (c && !+c.price){ c.price = price; await setDoc(doc(db,'config','catalog'), { items:cat, updatedBy:me(), updatedAt:serverTimestamp() }); }
+  else if (!c && !r){ cat.push({ name, price }); await setDoc(doc(db,'config','catalog'), { items:cat, updatedBy:me(), updatedAt:serverTimestamp() }); }
+}
 // سعر الصنف: سعر المطعم لو موجود، وإلا السعر الافتراضي
 function priceFor(o, name){
   const r = S.rests.find(x => x.id === o.restaurantId);
@@ -683,13 +712,14 @@ function quickList(o){
   return names.map(name => ({ name, price: priceFor(o, name) }));
 }
 function restModal(r = {}){
-  const lines = r.id ? (r.items||[]).map(m => m.price ? `${m.name} | ${m.price}` : m.name).join('\n') : S.catalog.map(m => `${m.name} | `).join('\n');
+  const base = r.id ? (r.items||[]) : S.catalog.map(m => ({ name:m.name, price:m.price }));
   modal(r.id ? 'تعديل المطعم' : 'مطعم جديد', `
     <label>الاسم<input name="name" required value="${esc(r.name||'')}"></label>
     <label>التليفون<input name="phone" type="tel" value="${esc(r.phone||'')}"></label>
-    <label>الأصناف — كل صنف في سطر: الاسم | السعر<textarea name="items" rows="8" placeholder="فول | 5&#10;طعمية | 2">${esc(lines)}</textarea></label>`,
+    <div class="mut" style="font-size:13px;margin-bottom:6px">أسعار المطعم ده (اللي تسيبه فاضي هياخد السعر الافتراضي):</div>
+    ${priceRows(base)}`,
     async f => {
-      const items = parseLines(f.get('items'));
+      const items = readPriceRows(f);
       const data = { name:f.get('name').trim(), phone:f.get('phone').trim(), items };
       if (r.id) await updateDoc(doc(db,'restaurants',r.id), data);
       else await addDoc(collection(db,'restaurants'), { ...data, createdBy:me(), createdAt:serverTimestamp() });
