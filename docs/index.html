@@ -117,13 +117,15 @@ const firebaseConfig = {
   appId: "1:119293186533:web:faea52c1afa25eb7aa1f0c"
 };
 const CURRENCY = "ج.م";      // العملة اللي بتظهر جنب الأرقام
+// الأصناف الثابتة اللي بتظهر للاختيار السريع (تتعدّل من صفحة المنيوهات)
+const DEFAULT_CATALOG = ["فول", "بيض", "فول بالبيض", "بطاطس", "بطاطس جمبري", "فلافل"];
 /* ============================================================ */
 
 const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db   = getFirestore(app);
 
-const S = { me:null, users:{}, orders:[], items:{}, transfers:[], rests:[], admins:null, carry:{}, notes:{}, notesFor:null, notesUnsub:null,
+const S = { me:null, users:{}, orders:[], items:{}, transfers:[], rests:[], catalog:[], admins:null, carry:{}, notes:{}, notesFor:null, notesUnsub:null,
             loaded:{}, unsubs:[], otab:'people', hf:'all', q:'', authMode:'login' };
 const isAdmin = () => !!S.admins?.includes(me());
 
@@ -218,6 +220,7 @@ function startListeners(){
   });
   L('config', doc(db,'config','app'), d => { S.admins = d.exists() ? (d.data().admins || []) : null; });
   L('carry', doc(db,'carry','pairs'), d => { S.carry = d.exists() ? (d.data().pairs || {}) : {}; });
+  L('catalog', doc(db,'config','catalog'), d => { S.catalog = d.exists() ? (d.data().items || []) : DEFAULT_CATALOG.map(name => ({ name, price:0 })); });
 }
 function stopListeners(){ S.unsubs.forEach(u=>u()); S.unsubs=[]; S.loaded={}; watchNotes(null); }
 // ملاحظات الطلبية: بنسمع لها بس وانت فاتح الطلبية (توفير قراءات)
@@ -236,7 +239,7 @@ function render(){ if (raf) return; raf = requestAnimationFrame(()=>{ raf=0; doR
 function doRender(){
   const app = $('#app');
   if (!S.me){ app.innerHTML = vAuth(); return; }
-  if (!['users','orders','items','transfers','rests','config','carry'].every(k=>S.loaded[k])){ app.innerHTML = '<div class="loading">جاري تحميل البيانات…</div>'; return; }
+  if (!['users','orders','items','transfers','rests','config','carry','catalog'].every(k=>S.loaded[k])){ app.innerHTML = '<div class="loading">جاري تحميل البيانات…</div>'; return; }
   const ae = document.activeElement, aid = ae?.id, s1 = ae?.selectionStart, s2 = ae?.selectionEnd;
   const [route, arg] = (location.hash.slice(1) || 'home').split('/');
   watchNotes(route === 'order' ? arg : null);
@@ -369,6 +372,7 @@ function vOrder(id){
     <div class="seg"><button class="${S.otab==='people'?'on':''}" data-act="otab" data-id="people">بالأشخاص</button><button class="${S.otab==='sum'?'on':''}" data-act="otab" data-id="sum">التجميع</button><button class="${S.otab==='notes'?'on':''}" data-act="otab" data-id="notes">ملاحظات${(S.notes[o.id]||[]).length?` (${S.notes[o.id].length})`:''}</button></div>
     ${open ? `<div class="row">${lastMyItems(o).length ? `<button class="btn" data-act="repeatLast" data-id="${o.id}">كرر طلبي اللي فات</button>`:''}<button class="btn pri" data-act="addItem" data-id="${o.id}">+ أضف طلبك</button></div>` : ''}
   </div>
+  ${open ? `<div class="card"><div class="mut" style="font-size:13px;margin-bottom:6px">اختار بضغطة (كل ضغطة = واحد زيادة):</div><div class="chips" style="margin:0">${quickList(o).map(m => { const q = (S.items[o.id]||[]).filter(i=>i.uid===me() && i.name===m.name && !i.note).reduce((a,i)=>a+(+i.qty||0),0); return `<button class="chip ${q?'on':''}" data-act="quick" data-id="${o.id}" data-x="${esc(m.name)}">${esc(m.name)}${m.price?` <small>${money(m.price)}</small>`:''}${q?` <b>×${r2(q)}</b>`:''}</button>`; }).join('')}</div></div>` : ''}
   ${S.otab==='people' ? `<div class="card">${people}</div>` : S.otab==='notes' ? vNotes(o) : `<div class="card">
     <pre class="sum">${esc(summaryText(o))}</pre>
     <div class="row"><button class="btn" data-act="copySum" data-id="${o.id}">انسخ</button>
@@ -448,7 +452,10 @@ function dayOfTs(x){ const d = new Date(tsOf(x)); return `${d.getFullYear()}-${S
 /* ---------- المنيوهات ---------- */
 function vMenus(){
   return `<h2>المنيوهات</h2>
-  <p class="mut" style="margin-top:-4px">ضيف المطاعم وأسعارها مرة واحدة، وبعدها الطلب بيبقى بضغطة.</p>
+  <div class="card"><div class="between"><h3>الأصناف الثابتة</h3><button class="btn sm" data-act="editCatalog">تعديل</button></div>
+    <div class="chips" style="margin:6px 0 0">${S.catalog.map(m => `<span class="chip">${esc(m.name)}${m.price?` <small>${money(m.price)}</small>`:''}</span>`).join('')}</div>
+    <p class="mut" style="font-size:12px;margin:8px 0 0">بتظهر في كل طلبية للاختيار بضغطة. لو المطعم ليه سعر تاني للصنف، اكتبه في منيو المطعم وهو اللي هيتحسب.</p></div>
+  <p class="mut">ضيف المطاعم وأسعارها مرة واحدة، وبعدها الطلب بيبقى بضغطة.</p>
   ${S.rests.length ? `<div class="grid">${S.rests.map(r => `<div class="card">
     <div class="between"><h3>${esc(r.name)}</h3><button class="btn sm" data-act="editRest" data-id="${r.id}">تعديل</button></div>
     ${r.phone?`<div class="mut" style="font-size:13px"><a href="tel:${esc(r.phone)}">${esc(r.phone)}</a></div>`:''}
@@ -524,8 +531,8 @@ function readOrderForm(f){
            payerUid:f.get('payerUid'), fee:+f.get('fee') || 0, deadline:f.get('deadline') || '', note:f.get('note').trim() };
 }
 function itemForm(o, it = {}){
-  const r = S.rests.find(x => x.id === o.restaurantId);
-  const chips = r?.items?.length ? `<div class="mut" style="font-size:13px;margin-bottom:4px">اختار من المنيو:</div><div class="chips">${r.items.map((m,i)=>`<button type="button" class="chip" data-act="pickMenu" data-id="${r.id}" data-x="${i}">${esc(m.name)} <small>${money(m.price)}</small></button>`).join('')}</div>` : '';
+  const list = quickList(o);
+  const chips = list.length ? `<div class="mut" style="font-size:13px;margin-bottom:4px">اختار صنف:</div><div class="chips">${list.map(m=>`<button type="button" class="chip" data-act="pickItem" data-id="${esc(m.name)}" data-x="${m.price}">${esc(m.name)}${m.price?` <small>${money(m.price)}</small>`:''}</button>`).join('')}</div>` : '';
   const hasPrev = !it.id && lastMyItems(o).length;
   return `${chips}
   <label>الصنف<input id="f_name" name="name" required value="${esc(it.name || '')}"></label>
@@ -618,7 +625,21 @@ const A = {
   editItem: (oid, iid) => { const o = S.orders.find(x=>x.id===oid), it = (S.items[oid]||[]).find(x=>x.id===iid);
     modal('تعديل الصنف', itemForm(o, it), f => updateDoc(doc(db,'orders',oid,'items',iid), { name:f.get('name').trim(), qty:+f.get('qty'), price:+f.get('price'), note:f.get('note').trim() })); },
   delItem: async (oid, iid) => { if (confirm('تحذف الصنف ده؟')) await deleteDoc(doc(db,'orders',oid,'items',iid)); },
-  pickMenu: (rid, i) => { const m = S.rests.find(r=>r.id===rid)?.items?.[+i]; if (!m) return; $('#f_name').value = m.name; $('#f_price').value = m.price; },
+  pickItem: (name, price) => { $('#f_name').value = name; if (+price) $('#f_price').value = price; else $('#f_price').focus(); },
+  quick: async (oid, name) => {
+    const o = S.orders.find(x=>x.id===oid); if (!o || o.status!=='open') return;
+    const mine = (S.items[oid]||[]).find(i => i.uid===me() && i.name===name && !i.note);
+    if (mine) { await updateDoc(doc(db,'orders',oid,'items',mine.id), { qty: r2((+mine.qty||0) + 1) }); return toast(`${name}: ${r2((+mine.qty||0)+1)}`); }
+    const price = priceFor(o, name);
+    if (!price) return modal('سعر ' + esc(name), itemForm(o, { name }), f => addDoc(collection(db,'orders',oid,'items'), {
+      uid:me(), orderId:oid, name:f.get('name').trim(), qty:+f.get('qty'), price:+f.get('price'), note:f.get('note').trim(), createdAt:serverTimestamp() }), 'أضف');
+    await addDoc(collection(db,'orders',oid,'items'), { uid:me(), orderId:oid, name, qty:1, price, note:'', createdAt:serverTimestamp() });
+    toast(`اتضاف ${name}`);
+  },
+  editCatalog: () => modal('الأصناف الثابتة', `
+    <p class="mut" style="margin-top:0;font-size:13px">كل صنف في سطر: الاسم | السعر الافتراضي. السعر ممكن يتساب فاضي، وسعر المطعم (من المنيو بتاعه) بيغلب عليه.</p>
+    <label>الأصناف<textarea name="items" rows="10">${esc(S.catalog.map(m => m.price ? `${m.name} | ${m.price}` : m.name).join('\n'))}</textarea></label>`,
+    f => setDoc(doc(db,'config','catalog'), { items: parseLines(f.get('items')), updatedBy:me(), updatedAt:serverTimestamp() })),
   repeatLast: async id => {
     const o = S.orders.find(x=>x.id===id), its = lastMyItems(o); if (!its.length) return;
     const b = writeBatch(db);
@@ -638,16 +659,32 @@ const A = {
   newRest: () => restModal(),
   editRest: id => restModal(S.rests.find(r=>r.id===id)),
 };
+// "الاسم | السعر" لكل سطر — السعر اختياري (0 = استخدم السعر الافتراضي)
+function parseLines(txt){
+  return String(txt||'').split('\n').map(l => l.trim()).filter(Boolean).map(l => {
+    const m = l.match(/^(.*?)\s*[|:،,\-–]\s*([\d.]+)\s*$/); return m ? { name:m[1].trim(), price:+m[2] } : { name:l.replace(/[|:،,\-–]\s*$/,'').trim(), price:0 };
+  }).filter(x => x.name);
+}
+// سعر الصنف: سعر المطعم لو موجود، وإلا السعر الافتراضي
+function priceFor(o, name){
+  const r = S.rests.find(x => x.id === o.restaurantId);
+  const rp = r?.items?.find(m => m.name === name)?.price;
+  if (+rp) return +rp;
+  return +(S.catalog.find(m => m.name === name)?.price) || 0;
+}
+// الأصناف المعروضة للاختيار: الثابتة + أصناف المطعم، بأسعار المطعم
+function quickList(o){
+  const names = [...new Set([...S.catalog.map(m=>m.name), ...((S.rests.find(x=>x.id===o.restaurantId)?.items)||[]).map(m=>m.name)])];
+  return names.map(name => ({ name, price: priceFor(o, name) }));
+}
 function restModal(r = {}){
-  const lines = (r.items||[]).map(m => `${m.name} | ${m.price}`).join('\n');
+  const lines = r.id ? (r.items||[]).map(m => m.price ? `${m.name} | ${m.price}` : m.name).join('\n') : S.catalog.map(m => `${m.name} | `).join('\n');
   modal(r.id ? 'تعديل المطعم' : 'مطعم جديد', `
     <label>الاسم<input name="name" required value="${esc(r.name||'')}"></label>
     <label>التليفون<input name="phone" type="tel" value="${esc(r.phone||'')}"></label>
     <label>الأصناف — كل صنف في سطر: الاسم | السعر<textarea name="items" rows="8" placeholder="فول | 5&#10;طعمية | 2">${esc(lines)}</textarea></label>`,
     async f => {
-      const items = f.get('items').split('\n').map(l => l.trim()).filter(Boolean).map(l => {
-        const m = l.match(/^(.*?)\s*[|:،,\-–]\s*([\d.]+)\s*$/); return m ? { name:m[1].trim(), price:+m[2] } : { name:l, price:0 };
-      });
+      const items = parseLines(f.get('items'));
       const data = { name:f.get('name').trim(), phone:f.get('phone').trim(), items };
       if (r.id) await updateDoc(doc(db,'restaurants',r.id), data);
       else await addDoc(collection(db,'restaurants'), { ...data, createdBy:me(), createdAt:serverTimestamp() });
