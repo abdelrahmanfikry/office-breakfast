@@ -22,6 +22,11 @@ service cloud.firestore {
       allow update: if isAdmin();
     }
 
+    // الأصناف الثابتة: مشتركة، أي حد يعدّلها
+    match /config/catalog {
+      allow read, write: if signedIn();
+    }
+
     // الأرصدة المرحّلة بعد التنظيف — الأدمن بس
     match /carry/{id} {
       allow read: if signedIn();
