@@ -38,7 +38,9 @@ service cloud.firestore {
       allow read: if signedIn();
       allow create: if signedIn() && request.resource.data.createdBy == request.auth.uid && request.resource.data.status == 'open';
       allow update: if signedIn() && request.resource.data.createdBy == resource.data.createdBy
-                    && (resource.data.createdBy == request.auth.uid || resource.data.payerUid == request.auth.uid);
+                    && (resource.data.createdBy == request.auth.uid || resource.data.payerUid == request.auth.uid
+                        // عجلة الحظ: أي حد يلفها ويسجّل مين هينزل (الحقول دي بس)
+                        || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['runnerUid', 'runnerLine', 'runnerAt', 'runnerSpins']));
       allow delete: if isAdmin();
 
       // الأصناف: كل واحد طلبه بس، وطول ما الطلبية مفتوحة
