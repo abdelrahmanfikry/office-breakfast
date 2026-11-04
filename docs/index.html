@@ -98,6 +98,14 @@ label{display:block;margin-bottom:10px;font-size:14px;color:var(--mut)}
 pre.sum{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px;font-family:inherit;font-size:14px;margin:0 0 10px}
 .dayh{font-size:13px;color:var(--mut);margin:14px 0 6px;font-weight:600}
 .loading{text-align:center;color:var(--mut);padding:40px}
+.wheelbox{position:relative;width:min(100%,360px);aspect-ratio:1;margin:0 auto}.wheelbox canvas{width:100%;height:100%;display:block}
+.pointer{position:absolute;top:-6px;left:50%;transform:translateX(-50%);border-left:16px solid transparent;border-right:16px solid transparent;border-top:30px solid var(--bad);filter:drop-shadow(0 2px 2px rgba(0,0,0,.3));z-index:2}
+.hub{position:absolute;inset:50% auto auto 50%;transform:translate(-50%,-50%);width:60px;height:60px;border-radius:50%;background:var(--card);border:4px solid var(--pri);display:grid;place-items:center;font-weight:700;color:var(--pri);font-size:13px;z-index:2}
+.wstatus{min-height:28px;text-align:center;font-weight:700;margin:10px 0 6px;color:var(--mut)}.wbig{font-size:17px;padding:11px 26px;border-radius:30px}
+.chip.off{text-decoration:line-through;opacity:.6}.wres{text-align:center;margin-top:12px;animation:pop .45s cubic-bezier(.2,1.6,.4,1)}@keyframes pop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+.wwin{font-size:28px;font-weight:900;color:var(--bad)}.order-box{background:var(--bg);border-radius:12px;padding:10px 12px;text-align:start;font-size:14px;margin:8px 0 10px}
+.runner{background:var(--badbg);color:var(--bad);border-radius:10px;padding:6px 10px;margin-top:8px;font-size:14px}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:40}
 </style>
 </head>
 <body>
@@ -304,7 +312,7 @@ function orderCard(o){
   const c = orderCalc(o), mineIn = c.parts.some(p=>p.uid===me());
   return `<a class="card ord" href="#order/${o.id}">
     <div class="between"><h3>${esc(o.title)}</h3><span class="pill ${o.status}">${STATUS[o.status]}</span></div>
-    <div class="meta">${o.restaurantName?esc(o.restaurantName)+' · ':''}بيدفع: ${esc(uname(o.payerUid))}${o.deadline&&o.status==='open'?` · آخر معاد ${esc(o.deadline)}`:''}</div>
+    <div class="meta">${o.restaurantName?esc(o.restaurantName)+' · ':''}بيدفع: ${esc(uname(o.payerUid))}${o.deadline&&o.status==='open'?` · آخر معاد ${esc(o.deadline)}`:''}${o.runnerUid?` · <b class="bad">النازل: ${esc(uname(o.runnerUid))}</b>`:''}</div>
     <div class="between" style="margin-top:8px"><span class="mut">${c.parts.length} شخص · ${c.its.length} صنف${mineIn?' · <b class="ok">طالب</b>':''}</span><span class="tot">${money(c.total)}</span></div>
   </a>`;
 }
@@ -364,6 +372,7 @@ function vOrder(id){
       ${o.restaurantName?`المكان: <b>${esc(o.restaurantName)}</b><br>`:''}
       بيدفع: <b>${esc(uname(o.payerUid))}</b> · عملها: ${esc(uname(o.createdBy))} · ${dayLabel(o.day)} ${timeOf(o.createdAt)}
       ${o.deadline?`<br>آخر معاد للطلب: <b>${esc(o.deadline)}</b>`:''}${o.note?`<br>${esc(o.note)}`:''}
+      ${o.runnerUid?`<div class="runner">النازل بأمر العجلة: <b>${esc(uname(o.runnerUid))}</b>${o.runnerLine?` — ${esc(o.runnerLine)}`:''}${(o.runnerSpins||0)>1?` <span style="opacity:.75">(العجلة اتلفّت ${o.runnerSpins} مرات)</span>`:''}</div>`:''}
     </div>
     <div class="between" style="margin-top:10px;border-top:1px solid var(--line);padding-top:10px">
       <span class="mut">الأصناف ${money(c.subtotal)}${c.fee?` + توصيل/خدمة ${money(c.fee)}`:''}</span><b style="font-size:18px">${money(c.total)}</b></div>
@@ -373,7 +382,7 @@ function vOrder(id){
       <button class="btn" data-act="editOrder" data-id="${o.id}">تعديل</button>
       ${o.status!=='cancelled' ? `<button class="btn dan" data-act="setStatus" data-id="${o.id}" data-x="cancelled">إلغاء</button>`:''}
     </div>` : ''}
-    <div class="row" style="margin-top:8px"><button class="btn sm" data-act="cloneOrder" data-id="${o.id}">اعمل زيها النهارده</button></div>
+    <div class="row" style="margin-top:8px"><button class="btn sm pri" data-act="wheel" data-id="${o.id}">مين هينزل؟ (العجلة)</button><button class="btn sm" data-act="pdf" data-id="${o.id}">PDF الطلبية</button><button class="btn sm" data-act="cloneOrder" data-id="${o.id}">اعمل زيها النهارده</button></div>
   </div>
   <div class="between" style="margin:14px 0 8px">
     <div class="seg"><button class="${S.otab==='people'?'on':''}" data-act="otab" data-id="people">بالأشخاص</button><button class="${S.otab==='sum'?'on':''}" data-act="otab" data-id="sum">التجميع</button><button class="${S.otab==='notes'?'on':''}" data-act="otab" data-id="notes">ملاحظات${(S.notes[o.id]||[]).length?` (${S.notes[o.id].length})`:''}</button></div>
@@ -527,6 +536,98 @@ function modal(title, body, onSubmit, submitLabel='حفظ'){
     try{ await onSubmit(new FormData(f)); closeModal(); }catch(err){ toast(errMsg(err)); btn.disabled = false; }
   };
 }
+
+/* ---------- عجلة الحظ: مين هينزل ---------- */
+const SPIN_LINES = ['العجلة بتفكر…', 'بنراجع سجلات التحويلات…', 'بنشوف مين آخر واحد قال «حوّلت» ومحوّلش…', 'بنحسب مين أكتر واحد طلب طعمية…', 'استنى… العجلة بتصلي استخارة', 'بنسأل عم الفول رأيه…', 'اللهم ما بعدني عن العجلة…'];
+const VERDICTS = ['الشعب قال كلمته. انزل يا بطل', 'العجلة اختارت، وده قرار نهائي لا يقبل الطعن ولا النقض', 'مبروك! كسبت رحلة مجانية لعربية الفول ذهاب وعودة', 'خد الفلوس وانزل، والعيش السخن أمانة في رقبتك', 'محدش يقدر يقف قدام القدر… ولا قدام العجلة', 'الفول مستنيك تحت، متتأخرش علشان الطعمية بتبرد', 'تم تعيينك مندوب الشعب لدى عربية الفول'];
+const OBJECTIONS = ['تم استلام اعتراضك ورفضه في نفس اللحظة', 'الاعتراض يقدم كتابة لعم الفول شخصيًا', 'العجلة لا تخطئ. اللي بيخطئ هو اللي بيعترض', 'اعتراضك اتسجل في محضر… ومحدش هيقراه', 'لو اعترضت تاني هتنزل بكرة كمان'];
+const WCOLORS = ['#0f766e', '#f59e0b', '#14b8a6', '#b45309', '#0d9488', '#d97706', '#115e59', '#ca8a04'];
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const W = { oid:null, all:[], ex:new Set(), rot:0, spinning:false, obj:0 };
+const wActive = () => W.all.filter(u => !W.ex.has(u));
+function sheet(title, body){
+  const m = $('#modal');
+  m.innerHTML = `<div class="sheet"><div class="mh"><b>${title}</b><button class="x" type="button" data-close>✕</button></div>${body}</div>`;
+  m.classList.remove('hidden');
+}
+function wPeople(){
+  const el = $('#wpeople'); if (!el) return;
+  el.innerHTML = W.all.map(u => `<button type="button" class="chip ${W.ex.has(u) ? 'off' : 'on'}" data-act="wToggle" data-id="${u}">${esc(uname(u))}${u === W.last ? ' (نزل آخر مرة)' : ''}</button>`).join('');
+}
+function wDraw(){
+  const cv = $('#wheel'); if (!cv) return;
+  const ctx = cv.getContext('2d'), ids = wActive(), n = ids.length, R = cv.width / 2, seg = 2 * Math.PI / Math.max(n, 1);
+  ctx.clearRect(0, 0, cv.width, cv.height); ctx.save(); ctx.translate(R, R);
+  ctx.beginPath(); ctx.arc(0, 0, R - 4, 0, 2 * Math.PI); ctx.fillStyle = '#1c2321'; ctx.fill();
+  if (!n){ ctx.fillStyle = '#fff'; ctx.font = '700 34px Cairo, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('محدش فاضل!', 0, 12); ctx.restore(); return; }
+  for (let i = 0; i < n; i++){
+    const a0 = W.rot + i * seg;
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, R - 16, a0, a0 + seg); ctx.closePath();
+    ctx.fillStyle = WCOLORS[i % WCOLORS.length]; ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 3; ctx.stroke();
+    ctx.save(); ctx.rotate(a0 + seg / 2); ctx.fillStyle = '#fff'; ctx.font = `700 ${n > 8 ? 26 : 32}px Cairo, sans-serif`;
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; ctx.direction = 'rtl';
+    const nm = uname(ids[i]); ctx.fillText(nm.length > 14 ? nm.slice(0, 13) + '…' : nm, R - 40, 0); ctx.restore();
+  }
+  for (let k = 0; k < 24; k++){ const a = k * Math.PI / 12; ctx.beginPath(); ctx.arc(Math.cos(a) * (R - 9), Math.sin(a) * (R - 9), 4, 0, 2 * Math.PI); ctx.fillStyle = k % 2 ? '#fde68a' : '#fff'; ctx.fill(); }
+  ctx.restore();
+}
+let actx; const tick = () => { try{ actx ??= new (window.AudioContext || window.webkitAudioContext)(); const o = actx.createOscillator(), g = actx.createGain(); o.frequency.value = 900; g.gain.value = .05; o.connect(g); g.connect(actx.destination); o.start(); g.gain.exponentialRampToValueAtTime(.0001, actx.currentTime + .05); o.stop(actx.currentTime + .06); }catch{} };
+const wStatus = s => { const el = $('#wstatus'); if (el) el.textContent = s; };
+function wResult(o){
+  const el = $('#wresult'); if (!el || !o.runnerUid) return;
+  const c = orderCalc(o), lines = summaryText(o).split('\n').filter(l => l.startsWith('•')).map(l => esc(l.slice(2)));
+  el.innerHTML = `<div class="wres"><div class="mut" style="font-size:12px">قرار العجلة النهائي:</div>
+    <div class="wwin">${esc(uname(o.runnerUid))}</div><div style="margin-bottom:8px">${esc(o.runnerLine || '')}</div>
+    <div class="order-box"><b>المطلوب من ${esc(uname(o.runnerUid))}:</b><br>${lines.join(' · ') || 'لسه محدش طلب'}<br><b>الحساب: ${money(c.total)}</b></div>
+    <div class="row" style="justify-content:center"><button type="button" class="btn" data-act="wObject">أنا معترض</button><button type="button" class="btn" data-act="pdf" data-id="${o.id}">PDF الطلبية</button><button type="button" class="btn" data-act="spinWheel" data-id="again">لِف تاني</button></div>
+    <div class="mut" id="wobj" style="font-size:13px;margin-top:8px"></div></div>`;
+}
+function confetti(){
+  let c = $('#confetti'); if (!c){ c = document.createElement('canvas'); c.id = 'confetti'; document.body.appendChild(c); }
+  const x = c.getContext('2d'); c.width = innerWidth; c.height = innerHeight;
+  const P = Array.from({length: 140}, () => ({ x: Math.random() * c.width, y: -20 - Math.random() * c.height * .5, vx: (Math.random() - .5) * 3, vy: 2 + Math.random() * 4, r: 4 + Math.random() * 5, a: Math.random() * 6, col: WCOLORS[Math.floor(Math.random() * WCOLORS.length)] }));
+  const t0 = performance.now();
+  (function f(now){ x.clearRect(0, 0, c.width, c.height);
+    for (const p of P){ p.x += p.vx; p.y += p.vy; p.a += .1; x.save(); x.translate(p.x, p.y); x.rotate(p.a); x.fillStyle = p.col; x.fillRect(-p.r, -p.r / 2, p.r * 2, p.r); x.restore(); }
+    if (now - t0 < 3500) requestAnimationFrame(f); else x.clearRect(0, 0, c.width, c.height); })(t0);
+}
+
+/* ---------- PDF الطلبية ---------- */
+function pdfHTML(o){
+  const c = orderCalc(o), g = {};
+  for (const it of c.its){ const k = it.name.trim() + '||' + (it.note||'').trim(); (g[k] ??= { name:it.name.trim(), note:(it.note||'').trim(), qty:0 }).qty += +it.qty || 0; }
+  const agg = Object.values(g).sort((a,b) => a.name.localeCompare(b.name,'ar') || a.note.localeCompare(b.note,'ar'));
+  const notes = S.notes[o.id] || [], pay = S.users[o.payerUid]?.payInfo;
+  const count = c.its.reduce((a,i) => a + (+i.qty||0), 0);
+  const when = new Date(o.day + 'T00:00').toLocaleDateString('ar-EG', {weekday:'long', day:'numeric', month:'long'});
+  return `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>طلبية ${esc(o.title)} ${esc(o.day)}</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+<style>@page{size:A4;margin:14mm}*{box-sizing:border-box}body{font-family:Cairo,sans-serif;color:#1c2321;margin:0;padding:12px;font-size:13px}
+.head{display:flex;justify-content:space-between;align-items:center;gap:10px;border-bottom:3px solid #0f766e;padding-bottom:8px;margin-bottom:12px}
+.brand{display:flex;align-items:center;gap:10px}.brand img{width:44px;height:44px;border-radius:11px}h1{font-size:20px;margin:0}.meta{color:#6b7671;font-size:12px}
+.runner{background:#fdecea;color:#b42318;border-radius:10px;padding:6px 12px;font-weight:700;text-align:center;font-size:12px}.runner b{font-size:16px;display:block}
+h2{font-size:14px;margin:14px 0 6px;color:#0f766e}table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid #e3e7e4;padding:6px;text-align:start;vertical-align:top}
+th{background:#e6f4f2;color:#0f766e;font-size:12px}.num{text-align:end;white-space:nowrap}.note{color:#a15c07;font-size:12px}.qty{font-weight:900;font-size:15px;color:#0f766e;width:46px;text-align:center}
+.total{display:flex;justify-content:space-between;background:#1c2321;color:#fff;border-radius:10px;padding:8px 14px;margin-top:10px;font-weight:700;font-size:15px}
+.box{border:1px dashed #cfd6d2;border-radius:10px;padding:8px 12px;margin-top:10px}.foot{margin-top:16px;text-align:center;color:#6b7671;font-size:11px}
+.tick{display:inline-block;width:14px;height:14px;border:1.5px solid #6b7671;border-radius:3px}
+*{-webkit-print-color-adjust:exact;print-color-adjust:exact}</style></head><body>
+<div class="head"><div class="brand"><img src="${location.origin + location.pathname.replace(/[^/]*$/, '')}icon.png" alt=""><div><h1>${esc(o.title)}${o.restaurantName ? ' — ' + esc(o.restaurantName) : ''}</h1>
+<div class="meta">${when} · بيدفع: ${esc(uname(o.payerUid))}</div></div></div>
+${o.runnerUid ? `<div class="runner">النازل بأمر العجلة<b>${esc(uname(o.runnerUid))}</b></div>` : ''}</div>
+<h2>1) التجميع — اللي هيتقال للمطعم</h2>
+<table><tr><th style="width:46px">العدد</th><th>الصنف</th><th>ملاحظات</th><th style="width:30px"></th></tr>
+${agg.map(a => `<tr><td class="qty">${r2(a.qty)}</td><td>${esc(a.name)}</td><td class="note">${esc(a.note)}</td><td><span class="tick"></span></td></tr>`).join('') || '<tr><td colspan="4">لسه محدش طلب</td></tr>'}</table>
+<h2>2) طلب كل واحد</h2>
+<table><tr><th style="width:110px">الاسم</th><th>طلبه</th><th class="num" style="width:90px">عليه</th></tr>
+${c.parts.map(p => `<tr><td><b>${esc(uname(p.uid))}</b></td><td>${p.items.map(i => `${r2(i.qty)} ${esc(i.name)}${i.note ? ` <span class="note">(${esc(i.note)})</span>` : ''}`).join(' · ')}</td><td class="num">${money(p.total)}</td></tr>`).join('')}</table>
+<div class="total"><span>الإجمالي (${c.parts.length} أشخاص · ${r2(count)} حاجة)${c.fee ? ` · منهم توصيل/خدمة ${money(c.fee)}` : ''}</span><span>${money(c.total)}</span></div>
+${o.note || notes.length ? `<div class="box"><b>ملاحظات الطلبية:</b>${o.note ? `<br>• ${esc(o.note)}` : ''}${notes.map(n => `<br>• ${esc(uname(n.uid))}: ${esc(n.text)}`).join('')}</div>` : ''}
+${pay ? `<div class="box"><b>التحويل لـ${esc(uname(o.payerUid))}:</b> ${esc(pay)}</div>` : ''}
+<div class="foot">اتطبعت من «فطار المكتب» · أي غلط في الطلب مسؤولية النازل · العجلة لا تخطئ</div>
+<script>document.fonts.ready.then(()=>setTimeout(()=>print(),300))<\/script></body></html>`;
+}
 function closeModal(){ const m=$('#modal'); m.classList.add('hidden'); m.innerHTML=''; }
 const userOptions = (sel, skip) => Object.values(S.users).filter(u=>u.id!==skip).sort((a,b)=>(a.name||'').localeCompare(b.name||'','ar'))
   .map(u => `<option value="${u.id}" ${u.id===sel?'selected':''}>${esc(u.name)}${u.id===me()?' (انت)':''}</option>`).join('');
@@ -577,6 +678,54 @@ const A = {
   hf: id => { S.hf = id; render(); },
   copyTxt: id => copy(id),
   copySum: id => copy(summaryText(S.orders.find(o=>o.id===id))),
+  wheel: oid => {
+    const o = S.orders.find(x => x.id === oid); if (!o) return;
+    const ids = [...new Set((S.items[oid] || []).map(i => i.uid))];
+    W.oid = oid; W.all = ids.length ? ids : Object.keys(S.users); W.obj = 0; W.spinning = false;
+    W.last = S.orders.find(x => x.id !== oid && x.runnerUid)?.runnerUid;
+    W.ex = new Set(W.last && W.all.includes(W.last) && W.all.length > 2 ? [W.last] : []);
+    sheet('مين هينزل؟', `<p class="mut" style="margin:-6px 0 10px;text-align:center;font-size:14px">العجلة هي اللي هتقرر، ومحدش ليه حق الاعتراض</p>
+      <div class="wheelbox"><div class="pointer"></div><canvas id="wheel" width="760" height="760"></canvas><div class="hub">العجلة</div></div>
+      <div class="wstatus" id="wstatus">${o.runnerUid ? `آخر قرار: ${esc(uname(o.runnerUid))}` : 'جاهزين؟ حد يدوس'}</div>
+      <div class="row" style="justify-content:center"><button type="button" class="btn pri wbig" id="wspin" data-act="spinWheel">لِف العجلة</button></div>
+      <div id="wresult"></div>
+      <div style="margin-top:14px"><b style="font-size:14px">مين داخل القرعة؟</b><div class="mut" style="font-size:12px;margin-bottom:6px">دوس على الاسم علشان تعفيه (نزل قبل كده، عنده اجتماع، رجله وجعاه…)</div><div class="chips" id="wpeople"></div></div>`);
+    wPeople(); wDraw(); wResult(o); document.fonts?.ready.then(wDraw);
+  },
+  wToggle: uid => { if (W.spinning) return; W.ex.has(uid) ? W.ex.delete(uid) : W.ex.add(uid); wPeople(); wDraw(); },
+  wObject: () => { W.obj++; const el = $('#wobj'); if (el) el.textContent = W.obj >= 3 ? 'خلاص اتعاقبت: هتنزل بكرة كمان' : pick(OBJECTIONS); },
+  spinWheel: (again) => {
+    const ids = wActive(); if (W.spinning) return;
+    if (ids.length < 2) return wStatus(ids.length ? `${uname(ids[0])} لوحده؟ يبقى هو اللي هينزل من غير عجلة` : 'رجّع حد للقرعة الأول');
+    W.spinning = true; W.obj = 0; const r = $('#wresult'); if (r) r.innerHTML = '';
+    if (again === 'again') wStatus('اللفة التانية بتتسجل في المحضر… وكله شايف');
+    const btn = $('#wspin'); if (btn) btn.disabled = true;
+    const n = ids.length, seg = 2 * Math.PI / n, win = crypto.getRandomValues(new Uint32Array(1))[0] % n;
+    const base = -Math.PI / 2 - (win + .5) * seg + (Math.random() - .5) * seg * .7;
+    const start = W.rot, target = base + 2 * Math.PI * (Math.ceil((start - base) / (2 * Math.PI)) + 6 + Math.floor(Math.random() * 3));
+    const dur = 6000, t0 = performance.now(); let lastSeg = -1, lineAt = t0;
+    const frame = now => {
+      if (!$('#wheel')) { W.spinning = false; return; }
+      const t = Math.min(1, (now - t0) / dur); W.rot = start + (target - start) * (1 - Math.pow(1 - t, 4)); wDraw();
+      const s = Math.floor((((-Math.PI / 2 - W.rot) % (2 * Math.PI)) + 4 * Math.PI) % (2 * Math.PI) / seg);
+      if (s !== lastSeg){ lastSeg = s; tick(); }
+      if (now - lineAt > 900){ lineAt = now; wStatus(pick(SPIN_LINES)); }
+      if (t < 1) return requestAnimationFrame(frame);
+      W.spinning = false; if (btn) btn.disabled = false; wStatus('');
+      const uid = ids[win], line = pick(VERDICTS);
+      updateDoc(doc(db,'orders',W.oid), { runnerUid:uid, runnerLine:line, runnerAt:serverTimestamp(), runnerSpins:increment(1) })
+        .catch(e => toast(errMsg(e)));
+      const o = S.orders.find(x => x.id === W.oid);
+      wResult({ ...o, runnerUid:uid, runnerLine:line }); confetti();
+    };
+    requestAnimationFrame(frame);
+  },
+  pdf: oid => {
+    const o = S.orders.find(x => x.id === oid); if (!o) return;
+    const w = window.open('', '_blank'); if (!w) return toast('اسمح بفتح النوافذ علشان الـPDF يطلع');
+    w.document.open(); w.document.write(pdfHTML(o)); w.document.close();
+    toast('اختار «حفظ كـ PDF» من نافذة الطباعة');
+  },
 
   newOrder: day => modal(day===yesterdayStr() ? 'طلبية امبارح' : 'طلبية جديدة', orderForm({ day: day || todayStr() }), async f => {
     const ref = await addDoc(collection(db,'orders'), { ...readOrderForm(f), status:'open', createdBy:me(), createdAt:serverTimestamp() });
