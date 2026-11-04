@@ -256,7 +256,7 @@ function doRender(){
   const ae = document.activeElement, aid = ae?.id, s1 = ae?.selectionStart, s2 = ae?.selectionEnd;
   const [route, arg] = (location.hash.slice(1) || 'home').split('/');
   watchNotes(route === 'order' ? arg : null);
-  const V = { home:vHome, order:()=>vOrder(arg), history:vHistory, money:vMoney, transfers:vTransfers, menus:vMenus, profile:vProfile };
+  const V = { home:vHome, order:()=>vOrder(arg), history:vHistory, money:vMoney, transfers:vTransfers, menus:vMenus, profile:vProfile, report:vReport };
   app.innerHTML = shell(route, (V[route] || vHome)());
   if (aid){ const el = document.getElementById(aid); if (el){ el.focus(); try{ el.setSelectionRange(s1,s2); }catch{} } }
 }
@@ -432,7 +432,8 @@ function vMoney(){
   const rows = Object.entries(mine).filter(([,v]) => Math.abs(v) > 0.009).sort((a,b)=>a[1]-b[1]);
   const pendOut = S.transfers.filter(t => t.fromUid===me() && !t.confirmed);
   const others = Object.values(S.users).sort((a,b)=>(net[a.id]||0)-(net[b.id]||0));
-  return `<h2>حسابي مع الناس</h2>
+  return `<a href="#report" class="card" style="display:flex;justify-content:space-between;align-items:center;margin-top:12px"><b>تقرير الشهر</b><span class="mut">مين صرف كام، وألقاب الشهر ←</span></a>
+  <h2>حسابي مع الناس</h2>
   <div class="card">${rows.length ? rows.map(([uid,v]) => {
     const pay = S.users[uid]?.payInfo;
     return `<div class="person"><div class="between">
@@ -903,7 +904,61 @@ document.addEventListener('click', async e => {
 });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 // رقم التحويل (انستاباي/محفظة) بيتغيّر مع اختيار الشخص
-document.addEventListener('change', e => { if (e.target.matches('#mf select[name=to]')) { const b = $('#paybox'); if (b) b.innerHTML = payBox(e.target.value); } });
+document.addEventListener('change', e => { if (e.target.matches('#mf select[name=to]')) { const b = $('#paybox'); if (b) b.innerHTML = payBox(e.target.value); } if (e.target.id === 'rmonth'){ S.rm = e.target.value; render(); } });
+/* ---------- تقرير الشهر ---------- */
+function vReport(){
+  const months = [...new Set(S.orders.filter(o => o.status === 'closed').map(o => (o.day||'').slice(0,7)))].filter(Boolean).sort().reverse();
+  const cur = todayStr().slice(0,7);
+  if (!months.includes(cur)) months.unshift(cur);
+  const m = S.rm && months.includes(S.rm) ? S.rm : months[0];
+  const mName = ym => new Date(ym + '-01T00:00').toLocaleDateString('ar-EG', { month:'long', year:'numeric' });
+  const orders = S.orders.filter(o => o.status === 'closed' && (o.day||'').startsWith(m));
+  const per = {}, items = {}, days = {};
+  let total = 0;
+  for (const o of orders){
+    const c = orderCalc(o); total += c.total; days[o.day] = (days[o.day]||0) + c.total;
+    for (const p of c.parts){ const x = per[p.uid] ??= { uid:p.uid, spent:0, orders:0, runs:0, qty:{} }; x.spent += p.total; x.orders++; for (const it of p.items){ x.qty[it.name] = (x.qty[it.name]||0) + (+it.qty||0); } }
+    for (const it of c.its) items[it.name] = (items[it.name]||0) + (+it.qty||0);
+    if (o.runnerUid){ (per[o.runnerUid] ??= { uid:o.runnerUid, spent:0, orders:0, runs:0, qty:{} }).runs++; }
+  }
+  const people = Object.values(per).sort((a,b) => b.spent - a.spent);
+  const topItems = Object.entries(items).sort((a,b) => b[1] - a[1]);
+  const dayList = Object.entries(days).sort((a,b) => b[1] - a[1]);
+  const mine = per[me()];
+  const best = (fn) => people.filter(fn).length ? people.filter(fn).reduce((a,b) => fn(b) > fn(a) ? b : a) : null;
+  const tKing = best(p => p.qty['طعمية'] || p.qty['فلافل'] || 0);
+  const runner = best(p => p.runs);
+  const saver = people.filter(p => p.orders).sort((a,b) => a.spent/a.orders - b.spent/b.orders)[0];
+  const big = people[0];
+  const title = (label, p, val) => p ? `<div class="person"><div class="between"><span>${label}</span><b>${esc(uname(p.uid))}${val ? ` <span class="mut" style="font-weight:400">(${val})</span>` : ''}</b></div></div>` : '';
+  return `<div class="between" style="margin:18px 0 10px"><h2 style="margin:0">تقرير الشهر</h2>
+    <select id="rmonth" style="width:auto;margin:0">${months.map(x => `<option value="${x}" ${x===m?'selected':''}>${mName(x)}</option>`).join('')}</select></div>
+  ${!orders.length ? '<div class="card empty">مفيش طلبيات مقفولة في الشهر ده لسه</div>' : `
+  <div class="stats">
+    <div class="stat ok"><small>انت صرفت</small><b>${money(mine?.spent||0)}</b><small>${mine?.orders||0} طلبية${mine?.runs ? ` · نزلت ${mine.runs} مرة` : ''}</small></div>
+    <div class="stat" style="background:var(--pri2);color:var(--pri)"><small>المكتب كله صرف</small><b>${money(total)}</b><small>${orders.length} طلبية · ${people.length} شخص</small></div>
+  </div>
+  <h2>ألقاب الشهر</h2>
+  <div class="card">
+    ${title('ملك الطعمية', tKing, tKing ? `${r2(tKing.qty['طعمية'] || tKing.qty['فلافل'])} واحدة` : '')}
+    ${title('بطل العربية (أكتر واحد نزل)', runner, runner ? `${runner.runs} مرة` : '')}
+    ${title('رجل الأعمال (أكتر واحد صرف)', big, big ? money(big.spent) : '')}
+    ${title('المحافظ الاقتصادي (أقل متوسط للطلبية)', saver, saver ? money(saver.spent / saver.orders) + ' للطلبية' : '')}
+  </div>
+  <h2>كل واحد صرف كام</h2>
+  <div class="card"><table><tr><th>الاسم</th><th class="num">طلبيات</th><th class="num">نزل</th><th class="num">صرف</th></tr>
+    ${people.map(p => `<tr><td>${esc(uname(p.uid))}${p.uid===me()?' (انت)':''}</td><td class="num">${p.orders}</td><td class="num">${p.runs||'—'}</td><td class="num"><b>${money(p.spent)}</b></td></tr>`).join('')}</table></div>
+  <h2>أكتر الأصناف طلبًا</h2>
+  <div class="card">${topItems.slice(0,8).map(([n,q], i) => `<div class="it"><span class="n">${i+1}. ${esc(n)}</span><span class="p"><b>${r2(q)}</b></span></div>`).join('')}</div>
+  <h2>الأيام</h2>
+  <div class="card">
+    <div class="it"><span class="n">أغلى يوم: ${dayLabel(dayList[0][0])}</span><span class="p bad"><b>${money(dayList[0][1])}</b></span></div>
+    ${dayList.length > 1 ? `<div class="it"><span class="n">أرخص يوم: ${dayLabel(dayList[dayList.length-1][0])}</span><span class="p ok"><b>${money(dayList[dayList.length-1][1])}</b></span></div>` : ''}
+    <div class="it mut"><span class="n">متوسط اليوم</span><span class="p">${money(total / dayList.length)}</span></div>
+  </div>
+  <p class="mut" style="font-size:12px">التقرير بيحسب الطلبيات المقفولة بس. لو الأدمن عمل تنظيف للبيانات القديمة، الطلبيات اللي اتمسحت مش هتظهر هنا.</p>`}`;
+}
+
 function payBox(uid){
   const p = S.users[uid]?.payInfo;
   return p ? `<div class="card" style="background:var(--pri2);border-color:var(--pri);margin:0 0 10px;padding:10px 12px"><div class="between"><div><div class="mut" style="font-size:12px">حوّل على (انستاباي / محفظة):</div><b style="font-size:17px;direction:ltr;unicode-bidi:embed">${esc(p)}</b></div><button type="button" class="btn sm pri" data-act="copyTxt" data-id="${esc(p)}">نسخ</button></div></div>`
