@@ -59,6 +59,20 @@ service cloud.firestore {
       }
     }
 
+    // صندوق الشكاوى: النص للكل من غير اسم · الكاتب في مجموعة منفصلة الأدمن بس يقراها
+    match /complaints/{cid} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.keys().hasOnly(['text', 'at'])
+                    && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 200;
+      allow delete: if isAdmin() || (exists(/databases/$(database)/documents/complaintAuthors/$(cid))
+                    && get(/databases/$(database)/documents/complaintAuthors/$(cid)).data.uid == request.auth.uid);
+    }
+    match /complaintAuthors/{cid} {
+      allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow create: if isMe(request.resource.data.uid) && request.resource.data.keys().hasOnly(['uid']);
+      allow delete: if isAdmin() || isMe(resource.data.uid);
+    }
+
     // قراءة كل الأصناف مرة واحدة (collectionGroup)
     match /{path=**}/items/{itemId} {
       allow read: if signedIn();
