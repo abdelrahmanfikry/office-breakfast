@@ -7,6 +7,9 @@
 <title>فطار المكتب</title>
 <link rel="icon" type="image/png" href="icon.png">
 <link rel="apple-touch-icon" href="icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="فطار المكتب">
 <meta property="og:title" content="فطار المكتب">
 <meta property="og:description" content="الطلبات والتجميع والحساب في مكان واحد">
 <meta property="og:image" content="https://abdelrahmanfikry.github.io/office-breakfast/icon.png">
@@ -34,7 +37,7 @@ header.top .in{max-width:860px;margin:0 auto;padding:10px 16px;display:flex;alig
 .sp{flex:1}
 .who{color:var(--mut);font-size:13px}
 nav.tabs{position:fixed;bottom:0;inset-inline:0;z-index:5;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom)}
-nav.tabs a{flex:1;max-width:140px;text-align:center;padding:9px 2px;font-size:13px;color:var(--mut);position:relative}
+nav.tabs a{flex:1;max-width:140px;text-align:center;padding:9px 1px;font-size:12.5px;white-space:nowrap;color:var(--mut);position:relative}
 nav.tabs a.on{color:var(--pri);font-weight:700}
 nav.tabs a.on::before{content:"";position:absolute;top:0;inset-inline:25%;height:3px;border-radius:3px;background:var(--pri)}
 .badge{display:inline-block;min-width:18px;padding:0 5px;border-radius:9px;background:var(--bad);color:#fff;font-size:11px;line-height:18px}
@@ -49,6 +52,7 @@ h3{font-size:16px;margin:0 0 6px}
 .stat.ok{background:var(--okbg);color:var(--ok)}.stat.bad{background:var(--badbg);color:var(--bad)}
 .mut{color:var(--mut)}.ok{color:var(--ok)}.bad{color:var(--bad)}
 .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+html,body{overflow-x:clip}.row .btn{max-width:100%;white-space:normal;text-align:center}
 .between{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .pill{display:inline-block;padding:1px 9px;border-radius:20px;font-size:12px;font-weight:600}
 .pill.open{background:var(--okbg);color:var(--ok)}.pill.closed{background:var(--pri2);color:var(--pri)}.pill.cancelled{background:var(--badbg);color:var(--bad)}.pill.warn{background:var(--warnbg);color:var(--warn)}
@@ -56,6 +60,13 @@ h3{font-size:16px;margin:0 0 6px}
 .btn:hover{border-color:var(--pri)}
 .btn.pri{background:var(--pri);border-color:var(--pri);color:#fff}
 @media (prefers-color-scheme:dark){.btn.pri{color:#06201d}}
+body.ramadan{--bg:#0b1530;--card:#13224a;--ink:#f6efd9;--mut:#aab3cc;--line:#26386a;--pri:#f4b942;--pri2:#2b2a4d;--ok:#5ee39a;--okbg:#123a2e;--bad:#ff8a80;--badbg:#3d1d2c;--warn:#ffd166;--warnbg:#3a3020;--sh:0 4px 18px rgba(0,0,0,.35)}
+body.ramadan .btn.pri{color:#1a1203}
+body.ramadan header.top{background:linear-gradient(90deg,#0b1530,#1d2b63)}
+body.ramadan header.top .in{position:relative}
+body.ramadan header.top .in::after{content:'🏮   🌙   🏮';position:absolute;top:100%;inset-inline-start:50%;transform:translateX(50%);font-size:18px;letter-spacing:2px;pointer-events:none;opacity:.9}
+.rmd{margin-top:10px;text-align:center;padding:14px;border-radius:var(--r);background:linear-gradient(135deg,#1d2b63,#3b2a6b);color:#f6efd9;font-weight:700;border:1px solid #f4b94255}
+.cmp{padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}.cmp:last-child{border:0}
 .btn.dan{color:var(--bad)}
 .btn.sm{padding:3px 9px;font-size:13px;border-radius:8px}
 .btn:disabled{opacity:.5;cursor:default}
@@ -98,6 +109,29 @@ label{display:block;margin-bottom:10px;font-size:14px;color:var(--mut)}
 pre.sum{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px;font-family:inherit;font-size:14px;margin:0 0 10px}
 .dayh{font-size:13px;color:var(--mut);margin:14px 0 6px;font-weight:600}
 .loading{text-align:center;color:var(--mut);padding:40px}
+.ann{display:flex;align-items:flex-start;gap:10px;background:var(--pri2);border-inline-start:4px solid var(--pri);border-radius:12px;padding:10px 12px;margin-bottom:12px;animation:annIn .35s ease}
+.ann-i{font-size:18px;line-height:1.4}.ann-t{flex:1;white-space:pre-wrap;font-size:14px;line-height:1.6}
+.ann-t small{display:block;color:var(--mut);font-size:11px;margin-top:2px}
+.ann-x{background:none;border:0;color:var(--mut);font-size:15px;cursor:pointer;padding:2px 4px;line-height:1}
+.poll{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px;animation:annIn .35s ease}
+.poll-q{font-weight:600;margin-bottom:8px;line-height:1.6}
+.poll-o{position:relative;display:flex;align-items:center;justify-content:space-between;width:100%;overflow:hidden;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin-bottom:6px;font:inherit;color:inherit;cursor:pointer;text-align:start}
+.poll-o.me{border-color:var(--pri);font-weight:600}.poll-o:disabled{cursor:default}
+.poll-bar{position:absolute;inset-block:0;inset-inline-start:0;background:var(--pri2);transition:width .4s ease}
+.poll-l,.poll-n{position:relative}.poll-n{color:var(--mut);font-size:13px}
+.poll-f{color:var(--mut);font-size:12px;margin-top:4px}
+.jar{margin-top:10px;background:linear-gradient(135deg,var(--pri2),var(--card))}
+.subs{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:10px}
+.subs summary{cursor:pointer;font-size:14px}.subs-l{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{font-size:12px;padding:3px 9px;border-radius:99px;border:1px solid var(--line);color:var(--mut)}.chip.on{background:var(--pri2);color:var(--pri);border-color:var(--pri)}
+.ptab{width:100%;border-collapse:collapse;font-size:14px}.ptab th{font-size:12px;color:var(--mut);font-weight:500;text-align:start;padding:4px 6px}
+.ptab td{padding:7px 6px;border-top:1px solid var(--line)}.ptab th:not(:first-child),.ptab td:not(:first-child){text-align:center;width:56px}.ptab tr.off td:first-child{color:var(--mut);text-decoration:line-through}
+.sw{width:40px;height:22px;border-radius:99px;border:0;background:var(--line);position:relative;cursor:pointer;padding:0;transition:background .2s}
+.sw i{position:absolute;top:3px;inset-inline-start:3px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px #0003;transition:inset-inline-start .2s}
+.sw.on{background:var(--pri)}.sw.on i{inset-inline-start:21px}.sw:disabled{opacity:.35;cursor:default}
+@keyframes annIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+#netbar{display:none;position:fixed;top:0;inset-inline:0;z-index:20;background:var(--warnbg);color:var(--warn);border-bottom:1px solid var(--warn);text-align:center;font-size:13px;padding:6px 12px;padding-top:calc(6px + env(safe-area-inset-top))}
+#netbar.on{display:block}
 .wheelbox{position:relative;width:min(100%,360px);aspect-ratio:1;margin:0 auto}.wheelbox canvas{width:100%;height:100%;display:block}
 .pointer{position:absolute;top:-6px;left:50%;transform:translateX(-50%);border-left:16px solid transparent;border-right:16px solid transparent;border-top:30px solid var(--bad);filter:drop-shadow(0 2px 2px rgba(0,0,0,.3));z-index:2}
 .hub{position:absolute;inset:50% auto auto 50%;transform:translate(-50%,-50%);width:60px;height:60px;border-radius:50%;background:var(--card);border:4px solid var(--pri);display:grid;place-items:center;font-weight:700;color:var(--pri);font-size:13px;z-index:2}
@@ -112,13 +146,14 @@ pre.sum{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);b
 <div id="app"><div class="loading">جاري التحميل…</div></div>
 <div id="modal" class="modal hidden"></div>
 <div id="toast"></div>
+<div id="netbar">مفيش نت — بتشوف آخر بيانات اتحمّلت، وأي تعديل هيتبعت لما النت يرجع</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword,
          signOut, sendPasswordResetEmail, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, collection, collectionGroup, doc, addDoc, setDoc, updateDoc, deleteDoc,
-         onSnapshot, query, orderBy, serverTimestamp, writeBatch, getDocs, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, collectionGroup, doc, addDoc, setDoc, updateDoc, deleteDoc,
+         onSnapshot, query, orderBy, where, serverTimestamp, writeBatch, getDocs, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 /* ===================== الإعدادات — غيّرها ===================== */
 const firebaseConfig = {
@@ -136,7 +171,10 @@ const DEFAULT_CATALOG = ["فول", "بيض", "فول بالبيض", "بطاطس"
 
 const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db   = getFirestore(app);
+// كاش محلي: الموقع يفتح ويعرض آخر بيانات حتى لو النت قطع، والتعديلات تتبعت لما النت يرجع
+let db;
+try { db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) }); }
+catch { db = initializeFirestore(app, {}); }
 
 const S = { me:null, users:{}, orders:[], items:{}, transfers:[], rests:[], catalog:[], admins:null, carry:{}, notes:{}, notesFor:null, notesUnsub:null,
             loaded:{}, unsubs:[], otab:'people', hf:'all', q:'', authMode:'login' };
@@ -196,10 +234,41 @@ function ledger(){
     if (o.status !== 'closed' || !o.payerUid) continue;
     for (const p of orderCalc(o).parts) add(o.payerUid, p.uid, p.total);
   }
-  for (const t of S.transfers) if (t.confirmed) add(t.fromUid, t.toUid, +t.amount||0);
+  for (const t of S.transfers) if (t.confirmed) trAdd(add, t);
+  for (const c of (S.cash || [])) add(c.fromUid, c.toUid, +c.amount || 0); // دفع كاش سجّله الأدمن
+  // كارت العفو: اللي استخدمه عليه الغرامة لأمين صندوق الفطار
+  for (const u of Object.values(S.users || {})) for (const p of (u.pardons || [])) if (p.at > (S.resetAt || 0) && +p.fee > 0) add(p.to, u.id, +p.fee);
+  for (const p of (S.jarPay || [])) for (const [holder, amt] of Object.entries(p.holders || {})) add(p.winner, holder, +amt || 0); // الحصالة: اللي معاه الفكة عليه للكسبان
   // الأرصدة المرحّلة من البيانات القديمة اللي اتمسحت
   for (const [k, v] of Object.entries(S.carry)){ const [a, b] = k.split('_'); if (v > 0) add(a, b, v); else if (v < 0) add(b, a, -v); }
   return { net, pair };
+}
+// تحويل عادي: from سدّد لـ to · تحويل «على حساب» شخص: from سدّد دينه لـ ob، والفلوس بقت على to لـ ob
+function trAdd(add, t){
+  const a = +t.amount || 0;
+  if (t.onBehalf && t.onBehalf !== t.fromUid && t.onBehalf !== t.toUid){ add(t.fromUid, t.onBehalf, a); add(t.onBehalf, t.toUid, a); }
+  else add(t.fromUid, t.toUid, a);
+}
+// التسوية التلقائية: من صافي رصيد كل واحد ← أقل عدد تحويلات (أي تحويل لأي حد بيتحسب في الصافي)
+// أي فرق أقل من 10 قروش (كسور تقسيم التوصيل) بيتعتبر صفر — مفيش حد يحوّل 0.01
+const EPS = 0.1;
+function settlement(){
+  const { net } = ledger(), out = [];
+  const cr = Object.entries(net).filter(([,v]) => v > EPS).map(([id,v]) => ({ id, v:r2(v) }));
+  const de = Object.entries(net).filter(([,v]) => v < -EPS).map(([id,v]) => ({ id, v:r2(-v) }));
+  const push = (d, c, a) => { a = r2(a); if (a > EPS) out.push({ from:d.id, to:c.id, amount:a }); d.v = r2(d.v - a); c.v = r2(c.v - a); };
+  for (const d of de){ const c = cr.find(c => c.v > EPS && Math.abs(c.v - d.v) < EPS); if (c) push(d, c, Math.min(d.v, c.v)); }
+  for (let g = 0; g < 500; g++){
+    const D = de.filter(x => x.v > EPS).sort((a,b) => b.v - a.v), C = cr.filter(x => x.v > EPS).sort((a,b) => b.v - a.v);
+    if (!D.length || !C.length) break;
+    push(D[0], C[0], Math.min(D[0].v, C[0].v));
+  }
+  return out;
+}
+// علاقتي بالناس حسب التسوية: سالب = عليّ ليه · موجب = عليه ليّ
+function mySettle(){
+  const m = {}; for (const t of settlement()){ if (t.from === me()) m[t.to] = (m[t.to]||0) - t.amount; if (t.to === me()) m[t.from] = (m[t.from]||0) + t.amount; }
+  return m;
 }
 // مفتاح الترحيل: "a_b" مترتب — موجب = b عليه لـ a
 const carryKey = (cr, dr) => cr < dr ? [`${cr}_${dr}`, 1] : [`${dr}_${cr}`, -1];
@@ -207,15 +276,17 @@ function contribution(orders, transfers){
   const out = {};
   const add = (cr, dr, amt) => { if (!cr || !dr || cr===dr || !amt) return; const [k, s] = carryKey(cr, dr); out[k] = (out[k]||0) + s*amt; };
   for (const o of orders){ if (o.status !== 'closed' || !o.payerUid) continue; for (const p of orderCalc(o).parts) add(o.payerUid, p.uid, p.total); }
-  for (const t of transfers) if (t.confirmed) add(t.fromUid, t.toUid, +t.amount||0);
+  for (const t of transfers) if (t.confirmed) trAdd(add, t);
   return out;
 }
 
 /* ---------- الاستماع للبيانات (Realtime) ---------- */
 function startListeners(){
-  const L = (name, ref, fn) => S.unsubs.push(onSnapshot(ref, snap => { fn(snap); S.loaded[name]=true; render(); }, e => toast(errMsg(e))));
+  const L = (name, ref, fn) => S.unsubs.push(onSnapshot(ref, snap => { if (S.loaded[name]) try { notifyFrom(name, snap); } catch (e) { console.warn(e); } fn(snap); S.loaded[name]=true; render(); }, e => toast(errMsg(e))));
   L('users', collection(db,'users'), snap => {
     S.users = {}; snap.forEach(d => S.users[d.id] = { id:d.id, ...d.data() });
+    if (notifOn() && !myPushKey && !S._pushTried){ S._pushTried = true; pushSubscribe(); }
+    if (!S._skipChecked){ S._skipChecked = true; setTimeout(handleSkip, 0); }
     if (!S.users[me()]) setDoc(doc(db,'users',me()), { name: S.me.displayName || S.me.email.split('@')[0], email:S.me.email, payInfo:'', createdAt:serverTimestamp() }).catch(()=>{});
   });
   L('orders', query(collection(db,'orders'), orderBy('createdAt','desc')), snap => {
@@ -231,11 +302,41 @@ function startListeners(){
   L('rests', collection(db,'restaurants'), snap => {
     S.rests = snap.docs.map(d => ({ id:d.id, ...d.data() })).sort((a,b)=>(a.name||'').localeCompare(b.name||'','ar'));
   });
-  L('config', doc(db,'config','app'), d => { S.admins = d.exists() ? (d.data().admins || []) : null; });
+  L('config', doc(db,'config','app'), d => {
+    S.admins = d.exists() ? (d.data().admins || []) : null;
+    const an = d.exists() ? (d.data().announce || null) : null, prev = S.announce;
+    if (S.loaded.config && an?.text && an.at !== prev?.at && an.by !== me()) notify('إعلان من الأدمن', an.text, '#home');
+    S.announce = an;
+    const pl = d.exists() ? (d.data().poll || null) : null;
+    if (S.loaded.config && pl?.id && pl.id !== S.poll?.id && pl.by !== me()) notify('تصويت جديد', pl.q, '#home');
+    S.poll = pl;
+    S.lunch = d.exists() ? (d.data().lunch || {}) : {};
+    S.lunchMembers = d.exists() ? (d.data().lunchMembers || []) : [];
+    S.pushCfg = d.exists() ? (d.data().pushCfg || {}) : {};
+    S.girls = d.exists() ? (d.data().girls || []) : [];
+    S.bigBill = d.exists() ? (+d.data().bigBill || 300) : 300;
+    const cf = d.exists() ? d.data() : {};
+    watchAuthors();
+    S.ramadan = !!cf.ramadan; S.hiddenC = cf.hiddenComplaints || [];
+    S.pardonFee = cf.pardonFee ?? 10; S.pardonMax = cf.pardonMax ?? 1; S.treasurer = cf.treasurer || null; S.resetAt = cf.resetAt || 0;
+    S.girlsJoke = d.exists() ? d.data().girlsJoke !== false : true;
+    S.girlLines = d.exists() ? (d.data().girlLines || []) : [];
+  });
   L('carry', doc(db,'carry','pairs'), d => { S.carry = d.exists() ? (d.data().pairs || {}) : {}; });
+  L('cash', doc(db,'carry','cash'), d => { S.cash = d.exists() ? (d.data().items || []) : []; });
+  L('jar', doc(db,'carry','jar'), d => { S.jarPay = d.exists() ? (d.data().payouts || []) : []; });
+  L('complaints', collection(db,'complaints'), snap => { S.complaints = snap.docs.map(d => ({ id:d.id, ...d.data() })); });
   L('catalog', doc(db,'config','catalog'), d => { S.catalog = d.exists() ? (d.data().items || []) : DEFAULT_CATALOG.map(name => ({ name, price:0 })); });
 }
-function stopListeners(){ S.unsubs.forEach(u=>u()); S.unsubs=[]; S.loaded={}; watchNotes(null); }
+function stopListeners(){ S.unsubs.forEach(u=>u()); S.unsubs=[]; S.loaded={}; watchNotes(null); if (AU.un) AU.un(); AU.un = null; AU.mode = null; }
+// كاتب الشكوى: الأدمن بس يشوف الكل، وكل واحد يشوف شكاويه بس (علشان يمسحها)
+const AU = { un:null, mode:null };
+function watchAuthors(){
+  const mode = isAdmin() ? 'all' : 'me'; if (AU.mode === mode || !S.me) return;
+  if (AU.un) AU.un(); AU.mode = mode;
+  const q = mode === 'all' ? collection(db,'complaintAuthors') : query(collection(db,'complaintAuthors'), where('uid','==',me()));
+  AU.un = onSnapshot(q, snap => { S.cAuthors = {}; snap.forEach(d => S.cAuthors[d.id] = d.data().uid); render(); }, () => {});
+}
 // ملاحظات الطلبية: بنسمع لها بس وانت فاتح الطلبية (توفير قراءات)
 function watchNotes(oid){
   if (S.notesFor === oid) return;
@@ -256,16 +357,67 @@ function doRender(){
   const ae = document.activeElement, aid = ae?.id, s1 = ae?.selectionStart, s2 = ae?.selectionEnd;
   const [route, arg] = (location.hash.slice(1) || 'home').split('/');
   watchNotes(route === 'order' ? arg : null);
-  const V = { home:vHome, order:()=>vOrder(arg), history:vHistory, money:vMoney, transfers:vTransfers, menus:vMenus, profile:vProfile, report:vReport };
+  const V = { home:vHome, order:()=>vOrder(arg), history:vHistory, money:vMoney, transfers:vTransfers, menus:vMenus, profile:vProfile, report:vReport, lunch:vLunch };
+  document.body.classList.toggle('ramadan', !!S.ramadan);
   app.innerHTML = shell(route, (V[route] || vHome)());
   if (aid){ const el = document.getElementById(aid); if (el){ el.focus(); try{ el.setSelectionRange(s1,s2); }catch{} } }
+}
+// إعلان الأدمن: يظهر للكل فوق كل الصفحات، وكل واحد يقدر يقفله عنده
+function vAnnounce(){
+  const an = S.announce; if (!an?.text || LS.get('ob_ann_seen') === String(an.at)) return '';
+  return `<div class="ann"><span class="ann-i">📢</span><div class="ann-t">${esc(an.text)}<small>${esc(uname(an.by))}</small></div>
+    <button class="ann-x" data-act="annSeen" aria-label="قفل">✕</button></div>`;
+}
+// التصويت: السؤال في config/app (الأدمن) · صوت كل واحد في users/{uid}.votes — من غير قواعد جديدة
+function vPoll(){
+  const p = S.poll; if (!p?.id) return '';
+  const votes = Object.values(S.users).map(u => u.votes?.[p.id]).filter(v => v != null);
+  const mine = S.users[me()]?.votes?.[p.id], total = votes.length, nUsers = Object.keys(S.users).length;
+  const who = i => Object.values(S.users).filter(u => u.votes?.[p.id] === i).map(u => esc(u.name || '')).join('، ');
+  return `<div class="poll"><div class="poll-q">🗳️ ${esc(p.q)}${p.closed ? ' <span class="pill">انتهى</span>' : ''}</div>
+    ${p.options.map((o, i) => { const n = votes.filter(v => v === i).length, pc = total ? Math.round(n * 100 / total) : 0;
+      return `<button class="poll-o ${mine === i ? 'me' : ''}" ${p.closed ? 'disabled' : ''} data-act="vote" data-id="${i}" title="${who(i)}">
+        <span class="poll-bar" style="width:${pc}%"></span><span class="poll-l">${mine === i ? '✓ ' : ''}${esc(o)}</span><span class="poll-n">${n}</span></button>`; }).join('')}
+    <div class="poll-f">صوّت ${total} من ${nUsers}${mine != null && !p.closed ? ' · تقدر تغيّر صوتك' : ''}${total && total === nUsers && new Set(votes).size === 1 ? ' · <b>بالإجماع</b>' : ''}</div></div>`;
+}
+/* ---------- جدول الغدا ---------- */
+// الخطة في config/app.lunch (الأدمن) · الحضور في users/{uid}.lunch (كل واحد بتاعه) — من غير قواعد جديدة
+const ymd = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+function lunchWeek(){
+  const d = new Date(); d.setHours(12,0,0,0);
+  if (d.getDay() === 5) d.setDate(d.getDate() + 2); else if (d.getDay() === 6) d.setDate(d.getDate() + 1); // جمعة/سبت ← الأسبوع الجاي
+  d.setDate(d.getDate() - d.getDay()); // الأحد
+  return [0,1,2,3,4].map(i => { const x = new Date(d); x.setDate(d.getDate() + i); return ymd(x); });
+}
+// قسم الغدا بيظهر للناس اللي الأدمن اختارهم بس (والأدمنز)
+const canLunch = () => isAdmin() || (S.lunchMembers || []).includes(me());
+function vLunch(){
+  if (!canLunch()) return '<div class="card empty">القسم ده مش متاح لحسابك</div>';
+  const days = lunchWeek(), today = todayStr(), plan = S.lunch || {}, adm = isAdmin();
+  const mem = new Set([...(S.lunchMembers || []), ...(S.admins || [])]);
+  const att = day => { const yes = [], no = []; Object.values(S.users).filter(u => mem.has(u.id)).forEach(u => { const v = u.lunch?.[day]; if (v === true) yes.push(u); else if (v === false) no.push(u); }); return { yes, no }; };
+  return `<div class="between"><h2 style="margin:0">🍽️ جدول الغدا</h2>${adm ? '<button class="btn sm" data-act="lunchMembers">مين يشوف القسم</button>' : ''}</div>
+  ${adm ? `<p class="mut" style="font-size:12px;margin:4px 0 10px">ظاهر لـ: ${[...mem].map(u => esc(uname(u))).join('، ') || 'الأدمنز بس'}</p>` : ''}
+  <p class="mut" style="margin-top:-6px;font-size:13px">${adm ? 'حدد أكلة كل يوم، والناس تقول معاكم ولا لأ.' : 'شوف الأكل كل يوم، وقول معاكم ولا لأ.'}</p>
+  ${days.map(day => { const p = plan[day], { yes, no } = att(day), mine = S.users[me()]?.lunch?.[day], past = day < today, isT = day === today;
+    const rest = p?.rid ? S.rests.find(r => r.id === p.rid) : null, meal = rest?.name || p?.name || '';
+    const open = S.orders.find(o => o.day === day && o.status === 'open' && (o.lunch || o.title === 'غدا'));
+    return `<div class="card" style="${isT ? 'border:1.5px solid var(--pri)' : ''}${past ? ';opacity:.6' : ''}">
+      <div class="between"><b>${esc(dayLabel(day))}${isT ? '' : ''}</b>${adm && !past ? `<button class="btn sm" data-act="lunchSet" data-id="${day}">${meal ? 'غيّر' : 'حدد الأكل'}</button>` : ''}</div>
+      <div style="margin:6px 0;font-size:15px">${meal ? `🍲 <b>${esc(meal)}</b>${p?.note ? ` <span class="mut" style="font-size:13px">· ${esc(p.note)}</span>` : ''}` : '<span class="mut">لسه متحددش</span>'}</div>
+      <div class="mut" style="font-size:13px">معاكم (${yes.length}): ${yes.length ? yes.map(u => esc(u.name)).join('، ') : '—'}${no.length ? `<br>مش جايين (${no.length}): ${no.map(u => esc(u.name)).join('، ')}` : ''}</div>
+      ${past ? '' : `<div class="row" style="margin-top:8px">
+        <button class="btn sm ${mine === true ? 'pri' : ''}" data-act="lunchMe" data-id="${day}" data-x="1">${mine === true ? '✓ ' : ''}معاكم</button>
+        <button class="btn sm ${mine === false ? 'dan' : ''}" data-act="lunchMe" data-id="${day}" data-x="0">${mine === false ? '✓ ' : ''}مش ${isT ? 'النهارده' : 'اليوم ده'}</button>
+        ${isT && meal ? (open ? `<a class="btn sm pri" href="#order/${open.id}">افتح طلبية الغدا</a>` : `<button class="btn sm pri" data-act="lunchOrder" data-id="${day}">ابدأ طلبية الغدا</button>`) : ''}</div>`}
+    </div>`; }).join('')}`;
 }
 function shell(route, body){
   const pend = S.transfers.filter(t => t.toUid===me() && !t.confirmed && !t.rejected).length;
   const tab = (r, label, extra='') => `<a href="#${r}" class="${route===r || (r==='home'&&route==='order')?'on':''}">${label}${extra}</a>`;
-  return `<header class="top"><div class="in"><a href="#home" class="brand"><img src="icon.png" alt="">فطار المكتب</a><span class="sp"></span><a href="#profile" class="who">${esc(uname(me()))}</a></div></header>
-  <main class="wrap">${body}</main>
-  <nav class="tabs">${tab('home','الرئيسية')}${tab('history','الطلبيات')}${tab('money','الحساب')}${tab('transfers','التحويلات', pend?` <span class="badge">${pend}</span>`:'')}${tab('menus','المنيوهات')}${tab('profile','حسابي')}</nav>`;
+  return `<header class="top"><div class="in"><a href="#home" class="brand"><img src="icon.png" alt="">${S.ramadan ? 'فطار المكتب 🌙' : 'فطار المكتب'}</a><span class="sp"></span><a href="#profile" class="who">${esc(uname(me()))}</a></div></header>
+  <main class="wrap">${vAnnounce()}${vPoll()}${body}</main>
+  <nav class="tabs">${tab('home','الرئيسية')}${tab('history','الطلبيات')}${tab('money','الحساب')}${tab('transfers','التحويلات', pend?` <span class="badge">${pend}</span>`:'')}${canLunch() ? tab('lunch','الغدا') : ''}${tab('menus','المنيوهات')}${tab('profile','حسابي')}</nav>`;
 }
 
 /* ---------- شاشة الدخول ---------- */
@@ -304,8 +456,8 @@ document.addEventListener('submit', async e => {
 
 /* ---------- الرئيسية ---------- */
 function myTotals(){
-  const mine = ledger().pair[me()] || {}; let owed=0, owe=0;
-  for (const v of Object.values(mine)){ if (v > 0.009) owed += v; else if (v < -0.009) owe -= v; }
+  const mine = mySettle(); let owed=0, owe=0;
+  for (const v of Object.values(mine)){ if (v > EPS) owed += v; else if (v < -EPS) owe -= v; }
   return { owed, owe };
 }
 function orderCard(o){
@@ -315,6 +467,29 @@ function orderCard(o){
     <div class="meta">${o.restaurantName?esc(o.restaurantName)+' · ':''}بيدفع: ${esc(uname(o.payerUid))}${o.deadline&&o.status==='open'?` · آخر معاد ${esc(o.deadline)}`:''}${o.runnerUid?` · <b class="bad">النازل: ${esc(uname(o.runnerUid))}</b>`:''}</div>
     <div class="between" style="margin-top:8px"><span class="mut">${c.parts.length} شخص · ${c.its.length} صنف${mineIn?' · <b class="ok">طالب</b>':''}</span><span class="tot">${money(c.total)}</span></div>
   </a>`;
+}
+/* ---------- 🐷 حصالة الفكة ---------- */
+// اللي بيحوّل ويقرّب لفوق: الفرق بيتسجل «فكة» على التحويل نفسه، ومعاه اللي استلم.
+// آخر الشهر الأدمن يلف، والكسبان ياخد الحصالة كلها: كل اللي معاه فكة يبقى عليه للكسبان.
+const lastPayAt = () => Math.max(0, ...(S.jarPay || []).map(p => p.at || 0));
+function jarNow(){
+  const since = lastPayAt(), holders = {}; let total = 0, n = 0;
+  for (const t of S.transfers) if (t.confirmed && +t.jar > 0 && tsOf(t.createdAt) > since){ holders[t.toUid] = r2((holders[t.toUid]||0) + +t.jar); total += +t.jar; n++; }
+  return { total:r2(total), n, holders };
+}
+function vJar(){
+  const j = jarNow(), last = (S.jarPay || []).slice(-1)[0];
+  if (!j.n && !last) return '';
+  return `<div class="card jar"><div class="between"><div><b>🐷 حصالة الفكة</b><div class="mut" style="font-size:12px">${j.n ? `${j.n} مساهمة لحد دلوقتي` : 'فاضية — قرّب لفوق وانت بتحوّل'}${last ? ` · آخر كسبان: ${esc(uname(last.winner))} (${money(last.total)})` : ''}</div></div>
+    <b style="font-size:20px">${money(j.total)}</b></div>
+    ${isAdmin() && j.total > 0 ? '<div class="row" style="margin-top:8px"><button class="btn sm pri" data-act="jarSpin">🎰 لِف على الحصالة</button></div>' : ''}</div>`;
+}
+function allComplaints(){ return (S.complaints || []).slice().sort((a,b) => (b.at||0) - (a.at||0)); }
+function vComplaints(){
+  const all = allComplaints(), list = S.cAll ? all : all.slice(0, 3);
+  return `<div class="card" style="margin-top:14px"><div class="between"><b>📮 صندوق الشكاوى <span class="mut" style="font-size:12px;font-weight:400">(محدش هيعرف مين كتبها)</span></b><button class="btn sm pri" data-act="cNew">اشتكي 🤐</button></div>
+    ${list.length ? list.map(c => `<div class="cmp">«${esc(c.text)}»<div class="mut" style="font-size:12px">${new Date(c.at).toLocaleString('ar-EG',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})}${isAdmin() ? ` · <b>من: ${esc(uname(S.cAuthors?.[c.id]) || '؟')}</b> · <a href="#" data-act="cDel" data-id="${c.id}" class="bad">امسحها</a>` : S.cAuthors?.[c.id] === me() ? ` · <a href="#" data-act="cDel" data-id="${c.id}" class="bad">امسح شكوتي</a>` : ''}</div></div>`).join('') : '<div class="mut" style="font-size:13px;margin-top:6px">مفيش شكاوى… لسه 👀</div>'}
+    ${all.length > 3 ? `<a href="#" data-act="cAll" class="mut" style="font-size:13px">${S.cAll ? 'اقل' : `كل الشكاوى (${all.length})`}</a>` : ''}</div>`;
 }
 function vHome(){
   const t = myTotals();
@@ -327,6 +502,8 @@ function vHome(){
     <a href="#money" class="stat ok"><small>ليك عند الناس</small><b>${money(t.owed)}</b></a>
     <a href="#money" class="stat bad"><small>عليك للناس</small><b>${money(t.owe)}</b></a>
   </div>
+  ${S.ramadan ? `<div class="rmd">رمضان كريم 🌙🏮<div style="font-size:13px;font-weight:400;opacity:.85">الطلبية على المغرب… واللي يفطر قبل الأذان يدفع للحصالة 😇</div></div>` : ''}
+  ${vJar()}
   ${pend.length?`<a href="#transfers" class="card" style="display:block;margin-top:10px"><span class="pill warn">${pend.length}</span> تحويل محتاج تأكيدك إنه وصلك</a>`:''}
   ${caught.length?`<a href="#transfers" class="card" style="display:block;margin-top:10px;border-color:var(--bad)"><span class="pill cancelled">${esc(thiefLine(caught[0].id))}</span> ${esc(uname(caught[0].toUid))} بيقول التحويل بتاعك (${money(caught[0].amount)}) موصلش</a>`:''}
   <div class="row" style="margin-top:12px">
@@ -338,6 +515,7 @@ function vHome(){
   <h2>طلبيات مفتوحة دلوقتي</h2>
   ${open.length ? `<div class="grid">${open.map(orderCard).join('')}</div>` : '<div class="card empty">مفيش طلبية مفتوحة — اعمل واحدة من الزرار تحت</div>'}
   ${today.length ? `<h2>اتطلبت النهارده</h2><div class="grid">${today.map(orderCard).join('')}</div>` : ''}
+  ${vComplaints()}
   <button class="btn pri fab" data-act="newOrder">+ طلبية جديدة</button>`;
 }
 
@@ -351,14 +529,28 @@ function summaryText(o){
   const lines = Object.values(g).sort((a,b)=>a.name.localeCompare(b.name,'ar')).map(x => `• ${r2(x.qty)} × ${x.name}${x.note?` (${x.note})`:''}`);
   return `${o.title}${o.restaurantName?' — '+o.restaurantName:''}\n${lines.join('\n')}\n\nعدد الأصناف: ${lines.length} · الإجمالي: ${money(c.total)}`;
 }
+// رسالة المطعم: الأصناف بس من غير حساباتنا الداخلية
+function restText(o){
+  const lines = summaryText(o).split('\n').filter(l => l.startsWith('•'));
+  return `السلام عليكم، عاوزين الطلب ده:\n${lines.join('\n')}\n\nشكرًا`;
+}
+// رقم المطعم بصيغة واتساب (مصر: 01xxxxxxxxx ← 201xxxxxxxxx)
+function waNum(o){
+  const r = S.rests.find(x => x.id === o.restaurantId);
+  let d = String(r?.phone || '').replace(/[^\d+]/g, '').replace(/^\+/, '').replace(/^00/, '');
+  if (/^0\d{10}$/.test(d)) d = '2' + d;
+  return d.length >= 10 ? d : '';
+}
 function vOrder(id){
   const o = S.orders.find(x => x.id === id);
   if (!o) return '<div class="card empty">الطلبية مش موجودة</div>';
   const c = orderCalc(o), open = o.status === 'open', manage = o.createdBy===me() || o.payerUid===me();
   const mine = c.parts.find(p => p.uid===me());
+  const order1 = [...new Set(c.its.map(i => i.uid))], fast = order1[0], slow = order1.length >= 3 && o.status !== 'open' ? order1[order1.length - 1] : null;
+  const race = u => u === fast && order1.length >= 2 ? ' <span title="أول واحد طلب">⚡</span>' : u === slow ? ' <span title="آخر واحد طلب">🐢</span>' : '';
   const people = c.parts.length ? c.parts.sort((a,b)=> (a.uid===me()?-1:b.uid===me()?1:0)).map(p => `
     <div class="person">
-      <div class="between"><b>${esc(uname(p.uid))}${p.uid===me()?' (انت)':''}</b><b>${money(p.total)}</b></div>
+      <div class="between"><b>${esc(uname(p.uid))}${p.uid===me()?' (انت)':''}${race(p.uid)}</b><b>${money(p.total)}</b></div>
       ${p.items.map(it => `<div class="it"><span class="n">${r2(it.qty)} × ${esc(it.name)}${it.note?` <span class="note">— ${esc(it.note)}</span>`:''}</span>
         <span class="p mut">${money(it.qty*it.price)}</span>
         ${open && it.uid===me() ? `<button class="btn sm" data-act="qty" data-id="${o.id}" data-x="${it.id}|-1" title="قلّل">−</button><button class="btn sm" data-act="qty" data-id="${o.id}" data-x="${it.id}|1" title="زوّد">+</button><button class="btn sm" data-act="editItem" data-id="${o.id}" data-x="${it.id}">تعديل</button><button class="btn sm dan" data-act="delItem" data-id="${o.id}" data-x="${it.id}">حذف</button>`:''}</div>`).join('')}
@@ -372,21 +564,27 @@ function vOrder(id){
       ${o.restaurantName?`المكان: <b>${esc(o.restaurantName)}</b><br>`:''}
       بيدفع: <b>${esc(uname(o.payerUid))}</b> · عملها: ${esc(uname(o.createdBy))} · ${dayLabel(o.day)} ${timeOf(o.createdAt)}
       ${o.deadline?`<br>آخر معاد للطلب: <b>${esc(o.deadline)}</b>`:''}${o.note?`<br>${esc(o.note)}`:''}
+      ${(() => { const pu = Object.values(S.users).filter(u => pardoned(u.id, o.id)); return pu.length ? `<div class="mut" style="margin-top:4px">🃏 استخدموا كارت العفو: <b>${pu.map(u => esc(u.name)).join('، ')}</b></div>` : ''; })()}
       ${o.runnerUid?`<div class="runner">النازل بأمر العجلة: <b>${esc(uname(o.runnerUid))}</b>${o.runnerLine?` — ${esc(o.runnerLine)}`:''}${(o.runnerSpins||0)>1?` <span style="opacity:.75">(العجلة اتلفّت ${o.runnerSpins} مرات)</span>`:''}</div>`:''}
     </div>
     <div class="between" style="margin-top:10px;border-top:1px solid var(--line);padding-top:10px">
       <span class="mut">الأصناف ${money(c.subtotal)}${c.fee?` + توصيل/خدمة ${money(c.fee)}`:''}</span><b style="font-size:18px">${money(c.total)}</b></div>
+    ${bigBillBox(o, c.total)}
     ${mine ? `<div class="mut" style="margin-top:4px">طلبك: <b class="${o.payerUid===me()?'':'bad'}">${money(mine.total)}</b></div>`:''}
     ${manage ? `<div class="row" style="margin-top:12px">
+      ${open ? `<button class="btn" data-act="remindOrder" data-id="${o.id}">🔔 فكّر اللي ماطلبش</button>` : ''}
       ${open ? `<button class="btn pri" data-act="setStatus" data-id="${o.id}" data-x="closed">اقفل الطلبية (اتطلبت)</button>` : o.status==='closed' ? `<button class="btn" data-act="setStatus" data-id="${o.id}" data-x="open">افتحها تاني</button>` : `<button class="btn" data-act="setStatus" data-id="${o.id}" data-x="open">رجّعها</button>`}
       <button class="btn" data-act="editOrder" data-id="${o.id}">تعديل</button>
       ${o.status!=='cancelled' ? `<button class="btn dan" data-act="setStatus" data-id="${o.id}" data-x="cancelled">إلغاء</button>`:''}
     </div>` : ''}
+    <div class="row" style="margin-top:12px"><button class="btn pri" data-act="copySum" data-id="${o.id}">انسخ الطلبية كلها</button>
+      ${waNum(o) ? `<a class="btn" style="background:#25d366;border-color:#25d366;color:#fff" target="_blank" rel="noopener" href="https://wa.me/${waNum(o)}?text=${encodeURIComponent(restText(o))}">ابعتها للمطعم واتساب</a>` : `<a class="btn" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(summaryText(o))}">ابعت واتساب</a>`}</div>
+    ${!waNum(o) ? `<div class="mut" style="font-size:12px;margin-top:4px">${o.restaurantId ? `علشان تبعت للمطعم على طول: <a href="#" data-act="editRest" data-id="${o.restaurantId}" style="color:var(--pri);font-weight:600">ضيف رقمه</a>` : 'لو اخترت المطعم من المنيوهات وليه رقم، هيظهر زرار يبعت له على طول'}</div>` : ''}
     <div class="row" style="margin-top:8px"><button class="btn sm pri" data-act="wheel" data-id="${o.id}">مين هينزل؟ (العجلة)</button><button class="btn sm" data-act="pdf" data-id="${o.id}">PDF الطلبية</button><button class="btn sm" data-act="cloneOrder" data-id="${o.id}">اعمل زيها النهارده</button></div>
   </div>
-  <div class="between" style="margin:14px 0 8px">
+  <div class="between" style="margin:14px 0 8px;flex-wrap:wrap">
     <div class="seg"><button class="${S.otab==='people'?'on':''}" data-act="otab" data-id="people">بالأشخاص</button><button class="${S.otab==='sum'?'on':''}" data-act="otab" data-id="sum">التجميع</button><button class="${S.otab==='notes'?'on':''}" data-act="otab" data-id="notes">ملاحظات${(S.notes[o.id]||[]).length?` (${S.notes[o.id].length})`:''}</button></div>
-    ${open ? `<div class="row">${lastMyItems(o).length ? `<button class="btn" data-act="repeatLast" data-id="${o.id}">كرر طلبي اللي فات</button>`:''}<button class="btn pri" data-act="addItem" data-id="${o.id}">+ أضف طلبك</button></div>` : ''}
+    ${open ? `<div class="row">${lastMyItems(o).length && !(S.items[o.id]||[]).some(i=>i.uid===me()) ? `<button class="btn" data-act="repeatLast" data-id="${o.id}" title="${esc(lastMyItems(o).map(i => i.name + (i.qty>1 ? ' ×' + r2(i.qty) : '')).join('، '))}">🔁 طلبي المعتاد <small class="mut">(${esc((t => t.length > 22 ? t.slice(0, 21) + '…' : t)(lastMyItems(o).map(i => i.name).join('، ')))})</small></button>`:''}<button class="btn pri" data-act="addItem" data-id="${o.id}">+ أضف طلبك</button></div>` : ''}
   </div>
   ${open ? `<div class="card"><div class="mut" style="font-size:13px;margin-bottom:6px">اختار بضغطة (كل ضغطة = واحد زيادة) · <a href="#" data-act="editCatalog" style="color:var(--pri);font-weight:600">الأسعار</a></div>${quickList(o).length > 12 ? `<input id="qq" placeholder="دوّر على صنف" value="${esc(S.qq||'')}" style="margin:0 0 8px">` : ''}<div class="chips" style="margin:0;max-height:260px;overflow:auto">${quickList(o).filter(m => !S.qq || m.name.includes(S.qq.trim())).map(m => { const q = (S.items[o.id]||[]).filter(i=>i.uid===me() && i.name===m.name && !i.note).reduce((a,i)=>a+(+i.qty||0),0); return `<button class="chip ${q?'on':''}" data-act="quick" data-id="${o.id}" data-x="${esc(m.name)}">${esc(m.name)}${m.price?` <small>${money(m.price)}</small>`:''}${q?` <b>×${r2(q)}</b>`:''}</button>`; }).join('')}</div></div>` : ''}
   ${S.otab==='people' ? `<div class="card">${people}</div>` : S.otab==='notes' ? vNotes(o) : `<div class="card">
@@ -428,38 +626,44 @@ document.addEventListener('input', e => {
 
 /* ---------- الحساب ---------- */
 function vMoney(){
-  const { net, pair } = ledger(), mine = pair[me()] || {};
-  const rows = Object.entries(mine).filter(([,v]) => Math.abs(v) > 0.009).sort((a,b)=>a[1]-b[1]);
+  const { net } = ledger(), mine = mySettle();
+  const rows = Object.entries(mine).filter(([,v]) => Math.abs(v) > EPS).sort((a,b)=>a[1]-b[1]);
   const pendOut = S.transfers.filter(t => t.fromUid===me() && !t.confirmed);
   const others = Object.values(S.users).sort((a,b)=>(net[a.id]||0)-(net[b.id]||0));
   return `<a href="#report" class="card" style="display:flex;justify-content:space-between;align-items:center;margin-top:12px"><b>تقرير الشهر</b><span class="mut">مين صرف كام، وألقاب الشهر ←</span></a>
   <h2>حسابي مع الناس</h2>
+  <p class="mut" style="font-size:12px;margin:-6px 0 8px">بيتسوّى لوحده بأقل عدد تحويلات — أي تحويل لأي حد بيتحسب.</p>
   <div class="card">${rows.length ? rows.map(([uid,v]) => {
     const pay = S.users[uid]?.payInfo;
     return `<div class="person"><div class="between">
       <div>${v<0 ? `انت عليك لـ <b>${esc(uname(uid))}</b>` : `<b>${esc(uname(uid))}</b> عليه ليك`}
       ${v<0 && pay ? `<div class="mut" style="font-size:13px">بيانات التحويل: ${esc(pay)} <a href="#" data-act="copyTxt" data-id="${esc(pay)}">نسخ</a></div>`:''}</div>
       <div style="text-align:end"><b class="${v<0?'bad':'ok'}">${money(Math.abs(v))}</b>
-      ${v<0 ? `<div><button class="btn sm pri" data-act="newTransfer" data-id="${uid}" data-x="${r2(-v)}">سجّل إنك حوّلت</button></div>`:''}</div>
+      ${v<0 ? (() => { const pend = S.transfers.filter(t => t.fromUid===me() && t.toUid===uid && !t.confirmed && !t.rejected).reduce((a,t) => a + (+t.amount||0), 0);
+        return pend > 0 ? `<div class="mut" style="font-size:12px">سجّلت ${money(pend)} — مستني تأكيده</div>` : `<div><button class="btn sm pri" data-act="newTransfer" data-id="${uid}" data-x="${r2(-v)}">سجّل إنك حوّلت</button></div>`; })() : ''}</div>
     </div></div>`; }).join('') : '<div class="empty">حسابك صافي مع الكل</div>'}</div>
   ${pendOut.length ? `<p class="mut" style="font-size:13px">عندك ${pendOut.length} تحويل مستني تأكيد — مش محسوب في الأرقام لحد ما يتأكد.</p>`:''}
   <h2>رصيد الكل</h2>
   <div class="card"><table><tr><th>الاسم</th><th class="num">الرصيد</th></tr>
-  ${others.map(u => { const v = r2(net[u.id]||0); return `<tr><td>${esc(u.name)}${u.id===me()?' (انت)':''}</td><td class="num ${v>0?'ok':v<0?'bad':'mut'}">${v>0?'ليه ':v<0?'عليه ':''}${money(Math.abs(v))}</td></tr>`; }).join('')}
+  ${others.map(u => { let v = r2(net[u.id]||0); if (Math.abs(v) < EPS) v = 0; return `<tr><td>${esc(u.name)}${u.id===me()?' (انت)':''}</td><td class="num ${v>0?'ok':v<0?'bad':'mut'}">${v>0?'ليه ':v<0?'عليه ':''}${money(Math.abs(v))}</td></tr>`; }).join('')}
   </table><p class="mut" style="font-size:12px;margin-bottom:0">بيتحسب من الطلبيات المقفولة بس + التحويلات المتأكدة.</p></div>
   <button class="btn pri fab" data-act="newTransfer">+ تحويل</button>`;
 }
 
 /* ---------- التحويلات ---------- */
 function vTransfers(){
-  const mine = S.transfers.filter(t => t.fromUid===me() || t.toUid===me());
-  const all = S.transfers.filter(t => !(t.fromUid===me() || t.toUid===me()));
+  const inv = t => t.fromUid===me() || t.toUid===me() || t.onBehalf===me();
+  // الكاش اللي سجّله الأدمن بيظهر وسط التحويلات كتحويل متأكد عليه علامة «كاش»
+  const cashT = (S.cash||[]).map(c => ({ id:c.id, fromUid:c.fromUid, toUid:c.toUid, amount:c.amount, note:[c.note, 'سجّلها ' + uname(c.by)].filter(Boolean).join(' · '), confirmed:true, cash:true, createdAt:{ toMillis:() => c.at } }));
+  const list = [...S.transfers, ...cashT].sort((a,b) => tsOf(b.createdAt) - tsOf(a.createdAt));
+  const mine = list.filter(inv);
+  const all = list.filter(t => !inv(t));
   const row = t => {
     const toMe = t.toUid===me(), fromMe = t.fromUid===me();
     return `<div class="person"><div class="between">
-      <div><b>${esc(uname(t.fromUid))}</b> حوّل لـ <b>${esc(uname(t.toUid))}</b>
+      <div><b>${esc(uname(t.fromUid))}</b> حوّل لـ <b>${esc(uname(t.toUid))}</b>${t.onBehalf ? `<div style="font-size:13px;color:var(--pri)">على حساب <b>${esc(uname(t.onBehalf))}</b> — بقت على ${esc(uname(t.toUid))} لـ ${esc(uname(t.onBehalf))}</div>` : ''}
       <div class="mut" style="font-size:13px">${dayLabel(dayOfTs(t.createdAt))} ${timeOf(t.createdAt)}${t.note?' · '+esc(t.note):''}</div></div>
-      <div style="text-align:end"><b style="${t.rejected?'text-decoration:line-through;opacity:.7':''}">${money(t.amount)}</b><div>${t.confirmed ? '<span class="pill closed">متأكد</span>' : t.rejected ? `<span class="pill cancelled">${esc(thiefLine(t.id))}</span>` : '<span class="pill warn">مستني تأكيد</span>'}</div></div></div>
+      <div style="text-align:end"><b style="${t.rejected?'text-decoration:line-through;opacity:.7':''}">${money(t.amount)}</b>${+t.jar > 0 ? `<div class="mut" style="font-size:11px">+ ${money(t.jar)} 🐷</div>` : ''}<div>${t.cash ? '<span class="pill closed">كاش ✓</span>' : t.confirmed ? '<span class="pill closed">متأكد</span>' : t.rejected ? `<span class="pill cancelled">${esc(thiefLine(t.id))}</span>` : '<span class="pill warn">مستني تأكيد</span>'}</div></div></div>
       ${t.rejected ? `<div class="bad" style="font-size:13px;margin-top:4px">${esc(uname(t.toUid))} بيقول الفلوس موصلتش — ومش محسوبة في الحساب.</div>` : ''}
       ${!t.confirmed && !t.rejected && toMe ? `<div class="row" style="margin-top:6px"><button class="btn sm pri" data-act="confirmTr" data-id="${t.id}">وصلني</button><button class="btn sm dan" data-act="rejectTr" data-id="${t.id}">موصلش</button></div>`:''}
       ${t.rejected && toMe ? `<div class="row" style="margin-top:6px"><button class="btn sm pri" data-act="confirmTr" data-id="${t.id}">لأ خلاص وصلني</button></div>`:''}
@@ -499,6 +703,7 @@ function vProfile(){
       <label>بيانات التحويل ليك (انستاباي / محفظة / IBAN) — بتظهر للي عليه فلوس ليك<input name="payInfo" value="${esc(u.payInfo||'')}"></label>
       <button class="btn pri" type="submit">حفظ</button>
     </form></div>
+  ${vApp()}
   ${vAdmin()}
   <div class="card"><div class="between"><span class="mut">${esc(S.me.email)}</span><button class="btn dan" data-act="logout">خروج</button></div></div>`;
 }
@@ -509,10 +714,41 @@ function vAdmin(){
   const old = d => S.orders.filter(o => o.day < d && o.status !== 'open');
   return `<div class="card"><h3>الإدارة</h3>
     <p class="mut" style="margin-top:0">الأدمنز: ${S.admins.map(uname).map(esc).join('، ')}</p>
-    <div class="row" style="margin-bottom:14px"><button class="btn sm" data-act="addAdmin">+ أدمن</button></div>
+    <div class="row" style="margin-bottom:14px"><button class="btn sm" data-act="addAdmin">+ أدمن</button>${S.admins.length > 1 ? '<button class="btn sm" data-act="delAdmin">شيل أدمن</button>' : ''}</div>
+    <h3>دفع كاش</h3>
+    <p class="mut" style="margin-top:0;font-size:13px">لو حد دفع لحد كاش، سجّلها هنا وتتحسب على طول من غير تأكيد.</p>
+    <div class="row" style="margin-bottom:8px"><button class="btn pri sm" data-act="cashNew">+ سجّل دفع كاش</button></div>
+    ${(S.cash||[]).slice(-5).reverse().map(c => `<div class="between" style="font-size:13px;padding:4px 0;border-bottom:1px solid var(--line)"><span><b>${esc(uname(c.fromUid))}</b> دفع لـ <b>${esc(uname(c.toUid))}</b> ${money(c.amount)}${c.note ? ' · ' + esc(c.note) : ''}<span class="mut"> · ${esc(uname(c.by))}</span></span><a href="#" data-act="cashDel" data-id="${c.id}" class="bad">امسح</a></div>`).join('')}
+    <div style="margin-bottom:14px"></div>
     <h3>تنظيف البيانات القديمة (علشان الليمت المجاني)</h3>
     <p class="mut" style="margin-top:0;font-size:13px">بيمسح الطلبيات المقفولة/الملغية والتحويلات المتأكدة الأقدم من المدة اللي تختارها — <b>والحساب مبيضيعش</b>: رصيد كل اتنين بيترحّل قبل المسح. الطلبيات المفتوحة والتحويلات اللي مستنية تأكيد مبتتمسحش.</p>
     <div class="row">${[7,30,90].map(n => { const d = dayOfTs({toMillis:()=>Date.now()-n*864e5}); return `<button class="btn" data-act="cleanup" data-id="${n}">أقدم من ${n} يوم (${old(d).length})</button>`; }).join('')}</div>
+    <h3 style="margin-top:16px">🔔 الإشعارات</h3>
+    ${vPushAdmin()}
+    <div class="row" style="margin-top:8px"><button class="btn sm pri" data-act="pushAdmin">📣 ابعت إشعار</button><button class="btn sm" data-act="pushSummary">📊 ملخص الشهر</button><button class="btn sm" data-act="pushTest">إشعار تجربة</button></div>
+    <h3 style="margin-top:16px">🎡 العجلة والبنات</h3>
+    <p class="mut" style="margin-top:0;font-size:13px">لو العجلة وقفت على بنت، تطلع رسالة هزار وتلف تاني لوحدها. البنات: ${(S.girls||[]).length ? (S.girls||[]).map(uname).map(esc).join('، ') : 'محدش متحدد'}</p>
+    <div class="row" style="margin-bottom:6px"><button class="btn sm ${S.girlsJoke ? 'pri' : ''}" data-act="girlsJoke" data-x="${S.girlsJoke ? '0' : '1'}">${S.girlsJoke ? '✓ الهزار شغال' : '✕ الهزار مقفول'}</button>
+      <button class="btn sm" data-act="girlsSet">حدد البنات</button><button class="btn sm" data-act="girlLineAdd">+ رسالة هزار</button></div>
+    ${(S.girlLines||[]).map((l,i) => `<div class="between" style="font-size:13px;padding:4px 0;border-bottom:1px solid var(--line)"><span>${esc(l)}</span><a href="#" data-act="girlLineDel" data-id="${i}" class="bad">امسح</a></div>`).join('')}
+    <h3 style="margin-top:16px">🌙 وضع رمضان</h3>
+    <p class="mut" style="margin-top:0;font-size:13px">ثيم ليلي بفوانيس للكل، ورسالة «رمضان كريم»، واسم الطلبية الافتراضي «فطار رمضان».</p>
+    <div class="row"><button class="btn sm ${S.ramadan ? 'pri' : ''}" data-act="ramadan" data-x="${S.ramadan ? '0' : '1'}">${S.ramadan ? '✓ رمضان شغال' : '✕ رمضان مقفول'}</button></div>
+    <h3 style="margin-top:16px">🃏 كارت العفو</h3>
+    <p class="mut" style="margin-top:0;font-size:13px">أي حد يقدر يطلع نفسه من العجلة ${S.pardonMax ?? 1} مرة في الشهر، ويتحسب عليه <b>${money(+S.pardonFee || 0)}</b> لأمين صندوق الفطار: <b>${S.treasurer ? esc(uname(S.treasurer)) : 'اللي بيدفع الطلبية'}</b></p>
+    <div class="row"><button class="btn sm" data-act="pardonSet">الإعدادات</button></div>
+    <h3 style="margin-top:16px">💸 الفاتورة الكبيرة</h3>
+    <p class="mut" style="margin-top:0;font-size:13px">لو الطلبية عدّت <b>${money(S.bigBill || 300)}</b> تطلع رسالة هزار وكونفيتي، ولو عدّت الضعف تطلع رسالة طوارئ 🚨</p>
+    <div class="row"><button class="btn sm" data-act="bigBillSet">غيّر المبلغ</button></div>
+    <h3 style="margin-top:16px">إعلان للكل</h3>
+    <p class="mut" style="margin-top:0;font-size:13px">${S.announce?.text ? `الإعلان الحالي: «${esc(S.announce.text)}»` : 'مفيش إعلان دلوقتي.'}</p>
+    <div class="row"><button class="btn pri" data-act="annSend">${S.announce?.text ? 'غيّر الإعلان' : 'ابعت إعلان'}</button>${S.announce?.text ? '<button class="btn" data-act="annClear">شيل الإعلان</button>' : ''}</div>
+    <h3 style="margin-top:16px">تصويت</h3>
+    <p class="mut" style="margin-top:0;font-size:13px">${S.poll?.id ? `التصويت الحالي: «${esc(S.poll.q)}»${S.poll.closed ? ' (انتهى)' : ''}` : 'مفيش تصويت دلوقتي.'}</p>
+    <div class="row"><button class="btn pri" data-act="pollNew">تصويت جديد</button>${S.poll?.id ? `${S.poll.closed ? '' : '<button class="btn" data-act="pollClose">اقفل التصويت</button>'}<button class="btn" data-act="pollDel">شيل التصويت</button>` : ''}</div>
+    <h3 style="margin-top:16px">بداية جديدة</h3>
+    <p class="mut" style="margin-top:0;font-size:13px">بيمسح كل الطلبيات القديمة وكل التحويلات، وكل الحسابات تبقى صفر. الطلبيات المفتوحة بتفضل، والحساب يبدأ منها.</p>
+    <div class="row"><button class="btn dan" data-act="resetAll">ابدأ من جديد</button></div>
   </div>`;
 }
 document.addEventListener('submit', async e => {
@@ -544,8 +780,22 @@ const VERDICTS = ['الشعب قال كلمته. انزل يا بطل', 'الع�
 const OBJECTIONS = ['تم استلام اعتراضك ورفضه في نفس اللحظة', 'الاعتراض يقدم كتابة لعم الفول شخصيًا', 'العجلة لا تخطئ. اللي بيخطئ هو اللي بيعترض', 'اعتراضك اتسجل في محضر… ومحدش هيقراه', 'لو اعترضت تاني هتنزل بكرة كمان'];
 const WCOLORS = ['#0f766e', '#f59e0b', '#14b8a6', '#b45309', '#0d9488', '#d97706', '#115e59', '#ca8a04'];
 const pick = a => a[Math.floor(Math.random() * a.length)];
+const GIRL_LINES = ['معندناش بنات تنزل بره البيت 🙅‍♂️ — العجلة هتلف تاني', 'البنت متنزلش لعربية الفول، احنا مش في فيلم أبيض وأسود 🎬', 'العجلة اعتذرت رسمي وقالت: غلطة مطبعية، نعيد 🙏', 'لو بابا عرف إنها نزلت للفول هيقفل المكتب كله 👨‍🦳', 'تم الاعتراض من مجلس العائلة — لفة جديدة 🏠', 'العجلة اتكسفت واحمرّت… بتلف تاني 😳', 'الرجالة فين؟ قوم يا راجل انت وهو 💪', 'البنات للتوقيع على الحساب بس، النزول للرجالة 🧾'];
+const BIG_LINES = ['الشركة هتفلس بسببكم 💸', 'المحاسب شاف الفاتورة وأغمى عليه 😵', 'ده فطار ولا عزومة فرح؟ 💍', 'عربية الفول هتشتري عربية جديدة من ورانا 🚗', 'بالمعدل ده هنقسّط الفطار 🧾', 'الطعمية بقت استثمار يا جماعة 📈'];
+const HUGE_LINES = ['🚨 حالة طوارئ: الفاتورة عدّت الضعف — حد يبلّغ البنك المركزي', '🚨 العربية دي هتتقفل تبع المكتب رسمي', '🚨 مبروك، رسميًا بقيتوا أكبر عميل في المنطقة'];
+const hashOf = t => [...t].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7);
+function bigBillBox(o, total){
+  const th = S.bigBill || 300; if (o.status === 'cancelled' || !(total >= th)) return '';
+  const huge = total >= th * 2, list = huge ? HUGE_LINES : BIG_LINES, line = list[hashOf(o.id) % list.length];
+  try { const k = 'bigSeen:' + o.id + (huge ? ':2' : ''); if (!localStorage.getItem(k)) { localStorage.setItem(k, '1'); setTimeout(confetti, 300); } } catch {}
+  return `<div class="runner" style="margin-top:8px;text-align:center;font-weight:700">${line}</div>`;
+}
+const pardoned = (u, oid) => (S.users[u]?.pardons || []).some(p => p.oid === oid);
+const pardonsThisMonth = u => { const m = todayStr().slice(0, 7); return (S.users[u]?.pardons || []).filter(p => dayOfTs({ toMillis:() => p.at }).slice(0, 7) === m).length; };
+const isGirl = u => S.girlsJoke && (S.girls || []).includes(u);
+const girlLine = () => pick([...GIRL_LINES, ...(S.girlLines || [])]);
 const W = { oid:null, all:[], ex:new Set(), rot:0, spinning:false, obj:0 };
-const wActive = () => W.all.filter(u => !W.ex.has(u));
+const wActive = () => W.all.filter(u => !W.ex.has(u) && !pardoned(u, W.oid));
 function sheet(title, body){
   const m = $('#modal');
   m.innerHTML = `<div class="sheet"><div class="mh"><b>${title}</b><button class="x" type="button" data-close>✕</button></div>${body}</div>`;
@@ -553,7 +803,16 @@ function sheet(title, body){
 }
 function wPeople(){
   const el = $('#wpeople'); if (!el) return;
-  el.innerHTML = W.all.map(u => `<button type="button" class="chip ${W.ex.has(u) ? 'off' : 'on'}" data-act="wToggle" data-id="${u}">${esc(uname(u))}${u === W.last ? ' (نزل آخر مرة)' : ''}</button>`).join('');
+  el.innerHTML = W.all.map(u => `<button type="button" class="chip ${W.ex.has(u) || pardoned(u, W.oid) ? 'off' : 'on'}" data-act="wToggle" data-id="${u}">${esc(uname(u))}${isGirl(u) ? ' 🎀' : ''}${pardoned(u, W.oid) ? ' 🃏 (عفو)' : W.done?.has(u) ? ' (نزل الدور ده)' : ''}</button>`).join('')
+    + `<div class="mut" style="font-size:12px;margin-top:6px;width:100%">الدور: نزل ${W.done?.size||0} من ${W.all.length} — اللي لسه منزلش بس هو اللي في القرعة</div>`;
+}
+function pardonBox(o){
+  if (o.runnerUid || !W.all.includes(me())) return '';
+  if (pardoned(me(), o.id)) return '<div class="mut" style="text-align:center;font-size:13px;margin-top:8px">🃏 استخدمت كارت العفو في الطلبية دي — انت برّه القرعة</div>';
+  const left = (S.pardonMax ?? 1) - pardonsThisMonth(me()), fee = +S.pardonFee || 0;
+  if (left <= 0) return '<div class="mut" style="text-align:center;font-size:13px;margin-top:8px">🃏 كارت العفو بتاع الشهر ده خلص… استحمل</div>';
+  return `<div class="row" style="justify-content:center;margin-top:8px"><button type="button" class="btn" data-act="usePardon" data-id="${o.id}">🃏 كارت العفو${fee ? ` (${money(fee)} لأمين الصندوق)` : ''}</button></div>
+    <div class="mut" style="text-align:center;font-size:12px">فاضلك ${left} في الشهر ده · هتتفضح في الطلبية</div>`;
 }
 function wDraw(){
   const cv = $('#wheel'); if (!cv) return;
@@ -580,7 +839,7 @@ function wResult(o){
   el.innerHTML = `<div class="wres"><div class="mut" style="font-size:12px">قرار العجلة النهائي:</div>
     <div class="wwin">${esc(uname(o.runnerUid))}</div><div style="margin-bottom:8px">${esc(o.runnerLine || '')}</div>
     <div class="order-box"><b>المطلوب من ${esc(uname(o.runnerUid))}:</b><br>${lines.join(' · ') || 'لسه محدش طلب'}<br><b>الحساب: ${money(c.total)}</b></div>
-    <div class="row" style="justify-content:center"><button type="button" class="btn" data-act="wObject">أنا معترض</button><button type="button" class="btn" data-act="pdf" data-id="${o.id}">PDF الطلبية</button><button type="button" class="btn" data-act="spinWheel" data-id="again">لِف تاني</button></div>
+    <div class="row" style="justify-content:center"><button type="button" class="btn" data-act="wObject">أنا معترض</button><button type="button" class="btn" data-act="pdf" data-id="${o.id}">PDF الطلبية</button>${o.createdBy === me() || o.payerUid === me() ? `<button type="button" class="btn" data-act="spinWheel" data-id="again">لِف تاني</button>` : ''}</div>
     <div class="mut" id="wobj" style="font-size:13px;margin-top:8px"></div></div>`;
 }
 function confetti(){
@@ -634,7 +893,7 @@ const userOptions = (sel, skip) => Object.values(S.users).filter(u=>u.id!==skip)
   .map(u => `<option value="${u.id}" ${u.id===sel?'selected':''}>${esc(u.name)}${u.id===me()?' (انت)':''}</option>`).join('');
 
 function orderForm(o = {}){
-  return `<div class="row2"><label>العنوان<input name="title" required value="${esc(o.title || 'فطار')}"></label>
+  return `<div class="row2"><label>العنوان<input name="title" required value="${esc(o.title || (S.ramadan ? 'فطار رمضان 🌙' : 'فطار'))}"></label>
   <label>اليوم<input name="day" type="date" required max="${todayStr()}" value="${esc(o.day || todayStr())}"></label></div>
   <label>المطعم<select name="restaurantId"><option value="">— مكان مش في المنيوهات —</option>${S.rests.map(r=>`<option value="${r.id}" ${o.restaurantId===r.id?'selected':''}>${esc(r.name)}</option>`).join('')}</select></label>
   <label>اسم المكان (لو مش من المنيوهات)<input name="restaurantName" value="${esc(o.restaurantId ? '' : (o.restaurantName || ''))}"></label>
@@ -659,11 +918,15 @@ function itemForm(o, it = {}){
   <label>ملاحظة<input name="note" placeholder="مثلاً: من غير بصل" value="${esc(it.note || '')}"></label>
   ${hasPrev ? `<p style="margin:0 0 10px"><a href="#" data-act="repeatLast" data-id="${o.id}">كرّر آخر طلب ليا (${hasPrev} صنف)</a></p>` : ''}`;
 }
+// طلبي المعتاد: أكتر تركيبة طلبتها في آخر 10 طلبيات (من نفس المطعم لو موجود) — التعادل للأحدث
 function lastMyItems(o){
   const prev = S.orders.filter(x => x.id!==o.id && x.status!=='cancelled' && (S.items[x.id]||[]).some(i=>i.uid===me()));
   const same = o.restaurantId ? prev.filter(x => x.restaurantId===o.restaurantId) : prev;
-  const src = (same[0] || prev[0]); // orders مترتبة من الأحدث
-  return src ? (S.items[src.id] || []).filter(i => i.uid===me()) : [];
+  const pool = (same.length ? same : prev).slice(0, 10); if (!pool.length) return [];
+  const cnt = {}, first = {};
+  for (const x of pool){ const its = (S.items[x.id]||[]).filter(i=>i.uid===me()); const k = its.map(i => i.name + '×' + (+i.qty)).sort().join('|'); cnt[k] = (cnt[k]||0) + 1; first[k] ??= its; }
+  const best = Object.keys(cnt).sort((a,b) => cnt[b] - cnt[a])[0]; // sort ثابت ← التعادل للأحدث
+  return first[best] || [];
 }
 
 /* ---------- الأوامر ---------- */
@@ -683,21 +946,45 @@ const A = {
     const o = S.orders.find(x => x.id === oid); if (!o) return;
     const ids = [...new Set((S.items[oid] || []).map(i => i.uid))];
     W.oid = oid; W.all = ids.length ? ids : Object.keys(S.users); W.obj = 0; W.spinning = false;
-    W.last = S.orders.find(x => x.id !== oid && x.runnerUid)?.runnerUid;
-    W.ex = new Set(W.last && W.all.includes(W.last) && W.all.length > 2 ? [W.last] : []);
+    // الدور: كل واحد ينزل مرة، بترتيب عشوائي — اللي نزل الدور ده بيطلع من القرعة لحد ما الكل ينزل
+    const cnt = {}; for (const x of S.orders) if (x.id !== oid && x.runnerUid && x.status !== 'cancelled') cnt[x.runnerUid] = (cnt[x.runnerUid]||0) + 1;
+    const min = Math.min(...W.all.map(u => cnt[u] || 0));
+    W.done = new Set(W.all.filter(u => (cnt[u] || 0) > min));
+    W.last = null; W.ex = new Set(W.done);
     sheet('مين هينزل؟', `<p class="mut" style="margin:-6px 0 10px;text-align:center;font-size:14px">العجلة هي اللي هتقرر، ومحدش ليه حق الاعتراض</p>
       <div class="wheelbox"><div class="pointer"></div><canvas id="wheel" width="760" height="760"></canvas><div class="hub">العجلة</div></div>
       <div class="wstatus" id="wstatus">${o.runnerUid ? `آخر قرار: ${esc(uname(o.runnerUid))}` : 'جاهزين؟ حد يدوس'}</div>
-      <div class="row" style="justify-content:center"><button type="button" class="btn pri wbig" id="wspin" data-act="spinWheel">لِف العجلة</button></div>
+      ${o.runnerUid && !(o.createdBy === me() || o.payerUid === me()) ? `<div class="mut" style="text-align:center;font-size:13px">العجلة اتلفت خلاص — اللي عمل الطلبية بس يقدر يعيدها</div>` : `<div class="row" style="justify-content:center"><button type="button" class="btn pri wbig" id="wspin" data-act="spinWheel">${o.runnerUid ? 'عيد اللفة' : 'لِف العجلة'}</button></div>`}
       <div id="wresult"></div>
+      <div id="wpardon">${pardonBox(o)}</div>
       <div style="margin-top:14px"><b style="font-size:14px">مين داخل القرعة؟</b><div class="mut" style="font-size:12px;margin-bottom:6px">دوس على الاسم علشان تعفيه (نزل قبل كده، عنده اجتماع، رجله وجعاه…)</div><div class="chips" id="wpeople"></div></div>`);
     wPeople(); wDraw(); wResult(o); document.fonts?.ready.then(wDraw);
   },
-  wToggle: uid => { if (W.spinning) return; W.ex.has(uid) ? W.ex.delete(uid) : W.ex.add(uid); wPeople(); wDraw(); },
+  wToggle: uid => { if (W.spinning || pardoned(uid, W.oid)) return; W.ex.has(uid) ? W.ex.delete(uid) : W.ex.add(uid); wPeople(); wDraw(); },
+  usePardon: async oid => {
+    const o = S.orders.find(x => x.id === oid); if (!o || o.runnerUid) return;
+    const fee = +S.pardonFee || 0, to = S.treasurer || o.payerUid;
+    if (!confirm(`تستخدم كارت العفو وتطلع من العجلة؟${fee ? `\nهيتحسب عليك ${money(fee)} لـ ${uname(to)} (أمين صندوق الفطار)` : ''}\nواسمك هيظهر للكل 🃏`)) return;
+    const pardons = [...(S.users[me()]?.pardons || []), { oid, at: Date.now(), fee, to }];
+    S.users[me()] = { ...S.users[me()], pardons };
+    W.ex.add(me()); wPeople(); wDraw(); const pb = $('#wpardon'); if (pb) pb.innerHTML = pardonBox(o);
+    await setDoc(doc(db,'users',me()), { pardons }, { merge:true }).catch(e => toast(errMsg(e)));
+    toast('🃏 اتعفيت… المرة دي'); },
   wObject: () => { W.obj++; const el = $('#wobj'); if (el) el.textContent = W.obj >= 3 ? 'خلاص اتعاقبت: هتنزل بكرة كمان' : pick(OBJECTIONS); },
   spinWheel: (again) => {
     const ids = wActive(); if (W.spinning) return;
-    if (ids.length < 2) return wStatus(ids.length ? `${uname(ids[0])} لوحده؟ يبقى هو اللي هينزل من غير عجلة` : 'رجّع حد للقرعة الأول');
+    // لفة واحدة بس للطلبية — اللي عمل الطلبية أو اللي بيدفع بس يقدر يعيدها
+    const oo = S.orders.find(x => x.id === W.oid);
+    if (oo?.runnerUid && !(oo.createdBy === me() || oo.payerUid === me()))
+      return wStatus(`العجلة اتلفت خلاص — النازل: ${uname(oo.runnerUid)} · مفيش لف تاني`);
+    if (!ids.length) return wStatus('رجّع حد للقرعة الأول');
+    if (ids.every(isGirl)) return wStatus('مفيش ولا راجل فاضل في القرعة 😅 — رجّع حد من الرجالة أو انزلوا كلكم سوا');
+    if (ids.length === 1){ // فاضل واحد بس في الدور ← هو اللي ينزل من غير لف
+      const uid = ids[0], line = 'آخر واحد في الدور — مفيش مهرب';
+      pushSend('🎡 العجلة اختارتك!', `انزل هات «${S.orders.find(x=>x.id===W.oid)?.title || 'الطلبية'}» — ${line}`, '#order/' + W.oid, [uid], 'runner');
+      updateDoc(doc(db,'orders',W.oid), { runnerUid:uid, runnerLine:line, runnerAt:serverTimestamp(), runnerSpins:increment(1) }).catch(e => toast(errMsg(e)));
+      wStatus(`${uname(uid)} آخر واحد في الدور — هو اللي هينزل`); return wResult({ ...oo, runnerUid:uid, runnerLine:line });
+    }
     W.spinning = true; W.obj = 0; const r = $('#wresult'); if (r) r.innerHTML = '';
     if (again === 'again') wStatus('اللفة التانية بتتسجل في المحضر… وكله شايف');
     const btn = $('#wspin'); if (btn) btn.disabled = true;
@@ -713,7 +1000,15 @@ const A = {
       if (now - lineAt > 900){ lineAt = now; wStatus(pick(SPIN_LINES)); }
       if (t < 1) return requestAnimationFrame(frame);
       W.spinning = false; if (btn) btn.disabled = false; wStatus('');
-      const uid = ids[win], line = pick(VERDICTS);
+      const uid = ids[win];
+      if (isGirl(uid)){ // هزار: البنات متنزلش — تطلع من القرعة والعجلة تلف لوحدها
+        W.ex.add(uid); const r2 = $('#wresult');
+        if (r2) r2.innerHTML = `<div class="wres"><div class="wwin">${esc(uname(uid))} 🎀</div><div>${esc(girlLine())}</div></div>`;
+        if (btn) btn.disabled = true;
+        return setTimeout(() => { if (!$('#wheel')) return; wPeople(); wDraw(); if (btn) btn.disabled = false; A.spinWheel(); }, 3200);
+      }
+      const line = pick(VERDICTS);
+      pushSend('🎡 العجلة اختارتك!', `انزل هات «${S.orders.find(x=>x.id===W.oid)?.title || 'الطلبية'}» — ${line}`, '#order/' + W.oid, [uid], 'runner');
       updateDoc(doc(db,'orders',W.oid), { runnerUid:uid, runnerLine:line, runnerAt:serverTimestamp(), runnerSpins:increment(1) })
         .catch(e => toast(errMsg(e)));
       const o = S.orders.find(x => x.id === W.oid);
@@ -729,12 +1024,14 @@ const A = {
   },
 
   newOrder: day => modal(day===yesterdayStr() ? 'طلبية امبارح' : 'طلبية جديدة', orderForm({ day: day || todayStr() }), async f => {
-    const ref = await addDoc(collection(db,'orders'), { ...readOrderForm(f), status:'open', createdBy:me(), createdAt:serverTimestamp() });
+    const data = readOrderForm(f), ref = await addDoc(collection(db,'orders'), { ...data, status:'open', createdBy:me(), createdAt:serverTimestamp() });
+    pushSend('طلبية جديدة اتفتحت 🍳', `${uname(me())} فتح «${data.title || 'طلبية'}»${data.restaurantName ? ' من ' + data.restaurantName : ''} — الحق اطلب`, '#order/' + ref.id, null, 'order');
     location.hash = 'order/' + ref.id;
   }, 'افتح الطلبية'),
   cloneOrder: id => { const o = S.orders.find(x=>x.id===id);
     modal('طلبية زي دي', orderForm({ ...o, day:todayStr(), note:'' }), async f => {
-      const ref = await addDoc(collection(db,'orders'), { ...readOrderForm(f), status:'open', createdBy:me(), createdAt:serverTimestamp() });
+      const data = readOrderForm(f), ref = await addDoc(collection(db,'orders'), { ...data, status:'open', createdBy:me(), createdAt:serverTimestamp() });
+    pushSend('طلبية جديدة اتفتحت 🍳', `${uname(me())} فتح «${data.title || 'طلبية'}»${data.restaurantName ? ' من ' + data.restaurantName : ''} — الحق اطلب`, '#order/' + ref.id, null, 'order');
       location.hash = 'order/' + ref.id;
     }, 'افتح الطلبية'); },
   qty: async (oid, x) => {
@@ -747,8 +1044,147 @@ const A = {
     f => addDoc(collection(db,'orders',oid,'notes'), { uid:me(), text:f.get('text').trim(), createdAt:serverTimestamp() }), 'أضف'),
   delNote: async (oid, nid) => { if (confirm('تحذف الملاحظة؟')) await deleteDoc(doc(db,'orders',oid,'notes',nid)); },
   claimAdmin: () => setDoc(doc(db,'config','app'), { admins:[me()] }),
+  delAdmin: () => modal('شيل أدمن', `<label>الأدمن<select name="u">${S.admins.filter(u => u !== me()).map(u => `<option value="${u}">${esc(uname(u))}</option>`).join('')}</select></label>`,
+    f => updateDoc(doc(db,'config','app'), { admins: S.admins.filter(u => u !== f.get('u')) }), 'شيله'),
+  cashNew: () => modal('دفع كاش', `<label>مين دفع<select name="from" required>${userOptions('', '')}</select></label>
+      <label>دفع لمين<select name="to" required>${userOptions('', '')}</select></label>
+      <label>المبلغ<input name="amount" type="number" min="0.01" step="any" required></label>
+      <label>ملاحظة<input name="note" placeholder="مثلًا: كاش في المكتب"></label>`,
+    f => { const from = f.get('from'), to = f.get('to'), amount = r2(+f.get('amount'));
+      if (from === to) throw new Error('اختار شخصين مختلفين');
+      const item = { id:'c' + Date.now(), fromUid:from, toUid:to, amount, note:f.get('note').trim(), by:me(), at:Date.now() };
+      return setDoc(doc(db,'carry','cash'), { items:[...(S.cash||[]), item] }); }, 'سجّل'),
+  cashDel: async id => { if (!confirm('تمسح الدفع الكاش ده؟')) return;
+    await setDoc(doc(db,'carry','cash'), { items:(S.cash||[]).filter(c => c.id !== id) }); },
   addAdmin: () => modal('إضافة أدمن', `<label>المستخدم<select name="u">${userOptions('', me())}</select></label>`,
     f => updateDoc(doc(db,'config','app'), { admins:[...new Set([...(S.admins||[]), f.get('u')])] }), 'أضف'),
+  annSend: () => modal('إعلان للكل', `<label>الإعلان<textarea name="text" rows="4" required placeholder="مثلًا: الفطار النهارده الساعة 10">${esc(S.announce?.text||'')}</textarea></label>`,
+    f => { const text = f.get('text').trim(); pushSend('📢 إعلان', text, '#home', null, 'announce'); return updateDoc(doc(db,'config','app'), { announce:{ text, by:me(), at:Date.now() } }); }, 'ابعت'),
+  annClear: async () => { if (confirm('تشيل الإعلان من عند الكل؟')) await updateDoc(doc(db,'config','app'), { announce:null }); },
+  pollNew: () => modal('تصويت جديد', `<label>السؤال<textarea name="q" rows="2" required placeholder="موافقين البقشيش يتقسم على الكل؟"></textarea></label>
+      <label>الاختيارات — كل اختيار في سطر<textarea name="opts" rows="3" required>موافق\nمش موافق</textarea></label>`,
+    f => { const options = f.get('opts').split('\n').map(x => x.trim()).filter(Boolean).slice(0, 6);
+      if (options.length < 2) throw new Error('محتاج اختيارين على الأقل');
+      pushSend('🗳️ تصويت جديد', f.get('q').trim(), '#home', null, 'poll');
+      return updateDoc(doc(db,'config','app'), { poll:{ id:'p' + Date.now(), q:f.get('q').trim(), options, by:me(), at:Date.now(), closed:false } }); }, 'ابدأ التصويت'),
+  pollClose: async () => {
+    if (!S.poll?.id) return toast('مفيش تصويت');
+    await setDoc(doc(db,'config','app'), { poll:{ ...S.poll, closed:true } }, { merge:true });
+    toast('التصويت اتقفل');
+  },
+  pollDel: async () => {
+    if (!S.poll?.id) return toast('مفيش تصويت');
+    await setDoc(doc(db,'config','app'), { poll:null }, { merge:true });
+    toast('التصويت اتشال');
+  },
+  vote: i => { const p = S.poll; if (!p?.id || p.closed) return;
+    const cur = S.users[me()]?.votes?.[p.id];
+    return setDoc(doc(db,'users',me()), { votes:{ [p.id]: cur === +i ? null : +i } }, { merge:true }); },
+  girlsJoke: (_, x) => setDoc(doc(db,'config','app'), { girlsJoke: x === '1' }, { merge:true }).then(() => toast(x === '1' ? 'الهزار اشتغل 🎀' : 'الهزار اتقفل')),
+  ramadan: (_, x) => setDoc(doc(db,'config','app'), { ramadan: x === '1' }, { merge:true }).then(() => toast(x === '1' ? 'رمضان كريم 🌙' : 'وضع رمضان اتقفل')),
+  cNew: () => modal('شكوى مجهولة 🤐', `<p class="mut" style="margin-top:0;font-size:13px">اسمك مش هيظهر لحد غير الأدمن.</p><label>الشكوى<textarea name="t" maxlength="200" rows="3" required placeholder="مثلًا: الفول النهارده كان بارد زي قلب اللي نزل"></textarea></label>`,
+      f => { const t = f.get('t').trim().slice(0, 200); if (!t) return; const ref = doc(collection(db,'complaints')), b = writeBatch(db);
+        b.set(doc(db,'complaintAuthors',ref.id), { uid: me() }); b.set(ref, { text: t, at: Date.now() });
+        return b.commit().then(() => toast('الشكوى اتحطت في الصندوق 📮')).catch(e => toast(errMsg(e))); }, 'ابعت'),
+  cDel: id => { if (!confirm('تمسح الشكوى دي؟')) return; const b = writeBatch(db); b.delete(doc(db,'complaints',id)); b.delete(doc(db,'complaintAuthors',id)); return b.commit().catch(e => toast(errMsg(e))); },
+  cAll: () => { S.cAll = !S.cAll; render(); },
+  pardonSet: () => modal('كارت العفو', `<label>الغرامة (ج.م) — صفر يبقى ببلاش<input name="fee" type="number" min="0" step="0.5" inputmode="decimal" value="${+S.pardonFee || 0}" required></label>
+      <label>كام مرة في الشهر<input name="max" type="number" min="0" max="31" inputmode="numeric" value="${S.pardonMax ?? 1}" required></label>
+      <label>أمين صندوق الفطار<select name="tr"><option value="">— اللي بيدفع الطلبية —</option>${Object.values(S.users).sort((a,b)=>(a.name||'').localeCompare(b.name||'','ar')).map(u => `<option value="${u.id}" ${S.treasurer === u.id ? 'selected' : ''}>${esc(u.name)}</option>`).join('')}</select></label>`,
+      f => setDoc(doc(db,'config','app'), { pardonFee: Math.max(0, +f.get('fee') || 0), pardonMax: Math.max(0, Math.floor(+f.get('max') || 0)), treasurer: f.get('tr') || null }, { merge:true }), 'حفظ'),
+  bigBillSet: () => modal('حد الفاتورة الكبيرة', `<label>المبلغ (ج.م)<input name="v" type="number" min="1" inputmode="numeric" value="${S.bigBill || 300}" required></label>`,
+      f => { const v = +f.get('v'); if (!(v > 0)) return; return setDoc(doc(db,'config','app'), { bigBill: v }, { merge:true }); }, 'حفظ'),
+  girlsSet: () => { const cur = new Set(S.girls || []);
+    modal('مين البنات؟', `<p class="mut" style="margin-top:0;font-size:13px">اللي هتختارهم لو العجلة وقفت عليهم تطلع رسالة هزار وتلف تاني.</p>
+      ${Object.values(S.users).sort((a,b)=>(a.name||'').localeCompare(b.name||'','ar')).map(u => `<label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" name="g" value="${u.id}" ${cur.has(u.id) ? 'checked' : ''} style="width:auto"> ${esc(u.name)}</label>`).join('')}`,
+      f => setDoc(doc(db,'config','app'), { girls: f.getAll('g') }, { merge:true }), 'حفظ'); },
+  girlLineAdd: () => modal('رسالة هزار جديدة', `<label>الرسالة<input name="t" maxlength="120" placeholder="مثلًا: البنات للحساب بس، النزول للرجالة" required></label>`,
+      f => { const t = f.get('t').trim(); if (!t) return; return setDoc(doc(db,'config','app'), { girlLines: [...(S.girlLines || []), t] }, { merge:true }); }, 'ضيف'),
+  girlLineDel: i => setDoc(doc(db,'config','app'), { girlLines: (S.girlLines || []).filter((_, k) => k !== +i) }, { merge:true }),
+  lunchMembers: () => { const cur = new Set(S.lunchMembers || []);
+    modal('مين يشوف قسم الغدا', `<p class="mut" style="margin-top:0;font-size:13px">الأدمنز بيشوفوه دايمًا.</p>
+      ${Object.values(S.users).sort((a,b)=>(a.name||'').localeCompare(b.name||'','ar')).map(u => `<label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" name="m" value="${u.id}" ${cur.has(u.id) ? 'checked' : ''} style="width:auto"> ${esc(u.name)}${(S.admins||[]).includes(u.id) ? ' <span class="mut">(أدمن)</span>' : ''}</label>`).join('')}`,
+      f => updateDoc(doc(db,'config','app'), { lunchMembers: f.getAll('m') }), 'حفظ'); },
+  lunchSet: day => { const p = (S.lunch || {})[day] || {};
+    modal('أكل ' + dayLabel(day), `<label>من المنيوهات<select name="rid"><option value="">— مش من المنيوهات —</option>${S.rests.map(r => `<option value="${r.id}" ${p.rid === r.id ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}</select></label>
+      <label>أو اكتب الأكلة<input name="name" value="${esc(p.rid ? '' : (p.name || ''))}" placeholder="مثلًا: كشري"></label>
+      <label>ملاحظة<input name="note" value="${esc(p.note || '')}" placeholder="مثلًا: الطلب لحد 12"></label>`,
+      f => { const rid = f.get('rid'), name = f.get('name').trim(), note = f.get('note').trim();
+        const lunch = { ...(S.lunch || {}) };
+        if (!rid && !name) delete lunch[day]; else lunch[day] = { rid, name, note };
+        for (const k of Object.keys(lunch)) if (k < yesterdayStr()) delete lunch[k]; // تنظيف الأيام القديمة
+        return updateDoc(doc(db,'config','app'), { lunch }); }, 'حفظ'); },
+  lunchMe: (day, v) => { const cur = S.users[me()]?.lunch?.[day], val = v === '1';
+    return setDoc(doc(db,'users',me()), { lunch:{ [day]: cur === val ? null : val } }, { merge:true }); },
+  lunchOrder: day => { const p = (S.lunch || {})[day] || {};
+    return modal('طلبية الغدا', orderForm({ day, title:'غدا', restaurantId:p.rid || '', restaurantName:p.rid ? '' : (p.name || '') }), async f => {
+      const data = readOrderForm(f), ref = await addDoc(collection(db,'orders'), { ...data, lunch:true, status:'open', createdBy:me(), createdAt:serverTimestamp() });
+      pushSend('طلبية الغدا اتفتحت 🍲', `${data.restaurantName || 'الغدا'} — الحق اطلب`, '#order/' + ref.id, [...new Set([...(S.lunchMembers||[]), ...(S.admins||[])])], 'lunch');
+      location.hash = 'order/' + ref.id; }, 'افتح الطلبية'); },
+  myPush: async (k, x) => { await setDoc(doc(db,'users',me()), { pushOff:{ [k]: x === '1' } }, { merge:true }); toast(x === '1' ? 'اتقفل عندك ✕' : 'اتشغّل عندك ✓'); },
+  pushCfg: async (k, x) => { const on = x === '1';
+    await setDoc(doc(db,'config','app'), { pushCfg:{ [k]: on } }, { merge:true });
+    toast(on ? 'اتشغّل ✓' : 'اتقفل ✕'); },
+  pushAdmin: () => {
+    const fun = ['الفطار وصل 🥳 انزلوا قبل ما الفول يبرد ويزعل', 'اللي عليه فلوس يدفع بالذوق… قبل ما العجلة تختاره يدفع للكل 😈', 'تنبيه هام: الطعمية خلصت، والحزن عمّ المكتب 💔', 'مين أكل البيض بتاعي؟ التحقيقات جارية 🕵️', 'الطلبية هتتقفل كمان شوية — اللي مطلبش هيتغدى نسكافيه ☕', 'النهارده عزومة على حساب الحصالة 🐷… لو فيها فلوس'];
+    modal('📣 إشعار من الأدمن', `<label>العنوان<input name="title" value="📣 من الإدارة" maxlength="60"></label>
+      <label>الرسالة<textarea name="body" rows="3" required maxlength="200" placeholder="اكتب اللي عاوزه…"></textarea></label>
+      <div class="mut" style="font-size:12px;margin:-4px 0 6px">أو اختار جاهزة 😄</div>
+      <div class="row" style="flex-wrap:wrap;gap:6px;margin-bottom:10px">${fun.map(t => `<button type="button" class="btn sm" onclick="this.form.body.value=this.textContent">${esc(t)}</button>`).join('')}</div>
+      <label>لمين؟<select name="to"><option value="all">الكل</option>${S.lunchMembers?.length ? '<option value="lunch">أعضاء الغدا</option>' : ''}${Object.values(S.users).filter(u => u.id !== me()).sort((a,b)=>(a.name||'').localeCompare(b.name||'','ar')).map(u => `<option value="${u.id}">${esc(u.name)} بس${Object.values(u.push||{}).some(v => v?.endpoint) ? ' 🔔' : ' (مش مشترك)'}</option>`).join('')}</select></label>
+      <div class="mut" style="font-size:12px;margin-top:-4px">🔔 = مشترك في الإشعارات. اللي مش مشترك مش هيوصله غير لو فتح الموقع.</div>
+      <label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" name="ann" value="1" style="width:auto"> كمان يتثبت كإعلان فوق الموقع</label>`,
+      f => { const title = f.get('title').trim() || '📣 من الإدارة', body = f.get('body').trim(), to = f.get('to');
+        const uids = to === 'all' ? null : to === 'lunch' ? [...new Set([...(S.lunchMembers||[]), ...(S.admins||[])])] : [to];
+        const target = uids || Object.keys(S.users), subd = target.filter(u => Object.values(S.users[u]?.push||{}).some(v => v?.endpoint) && !S.users[u]?.pushOff?.admin);
+        pushSend(title, body, '#home', uids, 'admin').then(r => toast(r?.off ? '⚠️ «إشعارات الأدمن» مقفولة للكل — شغّلها من جدول الإشعارات' : r?.none ? 'محدش من اللي اخترتهم مشترك في الإشعارات — ابعت إعلان بدلها' : r?.error ? '⚠️ ماتبعتش: ' + r.error : `📣 وصل لـ ${r.sent} جهاز${r.dead?.length ? ` (و${r.dead.length} اشتراك قديم بايظ)` : ''}`));
+        if (f.get('ann')) return updateDoc(doc(db,'config','app'), { announce:{ text:body, by:me(), at:Date.now() } }); }, 'ابعت'); },
+  // ملخص الشهر: إشعار شخصي لكل واحد — صرف كام، كام طلبية، أكتر صنف، ولقب على الماشي
+  pushSummary: () => {
+    const ms = [...new Set(S.orders.filter(o => o.status === 'closed').map(o => (o.day||'').slice(0,7)))].filter(Boolean).sort().reverse().slice(0, 4);
+    if (!ms.length) return toast('مفيش طلبيات مقفولة لسه');
+    const mName = ym => new Date(ym + '-01T00:00').toLocaleDateString('ar-EG', { month:'long' });
+    modal('📊 ملخص الشهر', `<label>أنهي شهر؟<select name="m">${ms.map(m => `<option value="${m}">${mName(m)}</option>`).join('')}</select></label>
+      <p class="mut" style="font-size:13px;margin-top:0">كل واحد هيوصله إشعار بأرقامه هو بس.</p>`, f => {
+      const m = f.get('m'), per = {};
+      for (const o of S.orders.filter(o => o.status === 'closed' && (o.day||'').startsWith(m))){
+        for (const p of orderCalc(o).parts){ const x = per[p.uid] ??= { spent:0, n:0, qty:{}, runs:0 }; x.spent += p.total; x.n++;
+          for (const it of p.items) x.qty[it.name] = (x.qty[it.name]||0) + (+it.qty||0); }
+        if (o.runnerUid && per[o.runnerUid]) per[o.runnerUid].runs++;
+      }
+      const ranks = Object.entries(per).sort((a,b) => b[1].spent - a[1].spent).map(([u]) => u);
+      const quip = (x, rank, top) => rank === 0 ? 'لقبك: أكبر ممول للمطاعم في المكتب 💸' : x.n >= 15 ? 'حضورك أعلى من الموظفين نفسهم 🔥' : x.runs >= 3 ? `نزلت ${x.runs} مرات… العجلة بتحبك 🎡` : /فول/.test(top) ? 'الفول بيسلّم عليك 🫘' : /طعمي/.test(top) ? 'الطعمية فاكراك بالاسم 🧆' : 'استمر كده، الحصالة مستنياك 🐷';
+      let sent = 0;
+      for (const [u, x] of Object.entries(per)){
+        const top = Object.entries(x.qty).sort((a,b) => b[1] - a[1])[0]?.[0] || '—';
+        pushSend(`📊 ملخص ${mName(m)}`, `صرفت ${money(x.spent)} على ${x.n} طلبية — أكتر حاجة طلبتها: ${top}. ${quip(x, ranks.indexOf(u), top)}`, '#report', [u], 'summary'); sent++;
+      }
+      toast(`اتبعت ملخص لـ ${sent} 📊`); }, 'ابعت'); },
+  pushSelf: () => { toast('بعت… اقفل الشاشة واستنى ثواني');
+    pushSend('🔔 تجربة لجهازك', 'لو شايف ده، الإشعارات شغالة عندك 👌', '#profile', [me()]).then(r => {
+      setTimeout(() => readLastPush().then(() => { render(); toast(r?.sent ? (lastPush && Date.now() - lastPush.at < 20000 ? '✅ الإشعار وصل للجهاز' : '⚠️ السيرفر بعت بس الجهاز ماستلمش — المشكلة في الموبايل/الشبكة') : '⚠️ ماتبعتش: ' + (r?.error || 'مفيش اشتراك')); }), 8000); }); },
+  pushTest: () => { if (!confirm('تبعت إشعار تجربة لكل المشتركين؟')) return; pushSend('🔔 تجربة', 'لو الإشعار ده وصلك، يبقى الإشعارات شغالة 👌', '#home', Object.keys(S.users)).then(r => toast(r?.none ? 'محدش مشترك' : r?.error ? '⚠️ ' + r.error : `وصل لـ ${r.sent} جهاز`)); },
+  annSeen: () => { LS.set('ob_ann_seen', String(S.announce?.at)); render(); },
+  // بداية جديدة: مسح كل الطلبيات غير المفتوحة + كل التحويلات + تصفير الأرصدة المرحّلة
+  resetAll: async () => {
+    const orders = S.orders.filter(o => o.status !== 'open'), trs = S.transfers;
+    if (!confirm(`بداية جديدة: هيتمسح ${orders.length} طلبية قديمة و${trs.length} تحويل، وكل الحسابات تبقى صفر.\nالطلبيات المفتوحة دلوقتي هتفضل زي ما هي.\nده مالوش رجوع — نزّل ملف Excel من التقرير الأول لو عاوز تحتفظ بنسخة.\nمتأكد؟`)) return;
+    const refs = [];
+    for (const o of orders){
+      (S.items[o.id] || []).forEach(i => refs.push(doc(db,'orders',o.id,'items',i.id)));
+      (await getDocs(collection(db,'orders',o.id,'notes'))).forEach(n => refs.push(n.ref));
+      refs.push(doc(db,'orders',o.id));
+    }
+    trs.forEach(t => refs.push(doc(db,'transfers',t.id)));
+    // الأصناف والملاحظات قبل الطلبية نفسها، والتصفير في آخر دفعة
+    for (let i = 0; i < refs.length; i += 400){
+      const b = writeBatch(db); refs.slice(i, i + 400).forEach(r => b.delete(r));
+      if (i + 400 >= refs.length){ b.set(doc(db,'carry','pairs'), { pairs:{} }); b.set(doc(db,'carry','cash'), { items:[] }); b.set(doc(db,'carry','jar'), { payouts:[] }); b.set(doc(db,'config','app'), { resetAt: Date.now() }, { merge:true }); }
+      await b.commit();
+    }
+    if (!refs.length){ await setDoc(doc(db,'carry','pairs'), { pairs:{} }); await setDoc(doc(db,'carry','cash'), { items:[] }); }
+    toast('بداية جديدة — كل الحسابات صفر');
+  },
   cleanup: async days => {
     const cut = dayOfTs({ toMillis:()=>Date.now() - (+days)*864e5 }), cutMs = Date.now() - (+days)*864e5;
     const orders = S.orders.filter(o => o.day < cut && o.status !== 'open');
@@ -784,7 +1220,17 @@ const A = {
     const msg = { closed:'تقفل الطلبية؟ محدش هيقدر يضيف أو يعدّل بعدها، والحساب هيتسجّل.', cancelled:'تلغي الطلبية؟ مش هتتحسب على حد.', open:'تفتح الطلبية تاني؟' }[st];
     if (!confirm(msg)) return;
     await updateDoc(doc(db,'orders',id), { status:st, ...(st==='closed'?{closedAt:serverTimestamp()}:{}) });
+    if (st === 'closed'){ const o = S.orders.find(x => x.id === id), c = o && orderCalc(o);
+      if (c) for (const p of c.parts) if (p.uid !== o.payerUid)
+        pushSend('الطلبية اتقفلت ✅', `«${o.title}» — نصيبك ${money(p.total)}، ادفع لـ ${uname(o.payerUid)}`, '#order/' + id, [p.uid], 'closed'); }
   },
+  remindOrder: id => { const o = S.orders.find(x => x.id === id); if (!o) return;
+    const inOrder = new Set(orderCalc(o).parts.map(p => p.uid)), skip = Object.fromEntries(Object.values(S.users).filter(u => u.skips?.[id]).map(u => [u.id, 1]));
+    const pool = o.lunch ? [...new Set([...(S.lunchMembers||[]), ...(S.admins||[])])] : Object.keys(S.users);
+    const to = pool.filter(u => !inOrder.has(u) && !skip[u] && u !== me());
+    if (!to.length) return toast('الكل طلب أو قال مش النهارده 👌');
+    pushSend('لسه ماطلبتش! ⏰', `«${o.title}»${o.deadline ? ' — آخر معاد ' + o.deadline : ''}، الحق قبل ما تتقفل`, '#order/' + id, to, 'remind');
+    toast(`اتبعت تذكير لـ ${to.length}`); },
 
   addItem: id => { const o = S.orders.find(x=>x.id===id); modal('أضف طلبك', itemForm(o), f => addItemFromForm(o, f), 'أضف'); },
   editItem: (oid, iid) => { const o = S.orders.find(x=>x.id===oid), it = (S.items[oid]||[]).find(x=>x.id===iid);
@@ -817,9 +1263,21 @@ const A = {
     <label>حوّلت لـ<select name="to" required>${userOptions(to, me())}</select></label>
     <div id="paybox">${payBox(to || Object.values(S.users).filter(u=>u.id!==me()).sort((a,b)=>(a.name||'').localeCompare(b.name||'','ar'))[0]?.id)}</div>
     <label>المبلغ<input name="amount" type="number" min="0.01" step="any" required value="${amt || ''}"></label>
+    <label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" name="jar" value="1" style="width:auto" checked> 🐷 قرّب لفوق وحط الفكة في الحصالة</label>
     <label>ملاحظة<input name="note" placeholder="مثلاً: انستاباي"></label>
-    <p class="mut" style="font-size:13px;margin-top:0">التحويل مش بيتحسب غير لما اللي استلم يأكد إنه وصله.</p>`,
-    f => addDoc(collection(db,'transfers'), { fromUid:me(), toUid:f.get('to'), amount:+f.get('amount'), note:f.get('note').trim(), confirmed:false, createdAt:serverTimestamp() }), 'سجّل'),
+    <p class="mut" style="font-size:13px;margin-top:0">مثلًا عليك 37.63: تحوّل 38، والـ0.37 تروح الحصالة. التحويل مش بيتحسب غير لما اللي استلم يأكد.</p>`,
+    f => { const to = f.get('to'), raw = r2(+f.get('amount')), up = Math.ceil(raw - 0.001), jar = f.get('jar') && up > raw ? r2(up - raw) : 0, amount = raw;
+      const dup = S.transfers.find(t => t.fromUid === me() && t.toUid === to && !t.confirmed && !t.rejected && Math.abs((+t.amount||0) - amount) < 0.01);
+      if (dup && !confirm(`انت مسجّل قبل كده تحويل ${money(amount)} لـ ${uname(to)} ولسه مستني تأكيد.\nتسجّل تحويل تاني؟`)) return;
+      // من غير ما نستنى السيرفر: التحويل بيظهر على طول ويتبعت في الخلفية
+      pushSend('تحويل مستني تأكيدك 💸', `${uname(me())} بيقول حوّلك ${money(jar ? Math.ceil(amount) : amount)}`, '#transfers', [to], 'transfer');
+      addDoc(collection(db,'transfers'), { fromUid:me(), toUid:to, amount, ...(jar ? { jar } : {}), note:f.get('note').trim(), confirmed:false, createdAt:serverTimestamp() }).catch(e => toast(errMsg(e)));
+      toast(jar ? `اتسجّل ✓ — حوّل ${money(up)}، و${money(jar)} راحوا الحصالة 🐷` : `اتسجّل ✓ — مستني ${uname(to)} يأكد إنه وصله`); location.hash = 'transfers'; }, 'سجّل'),
+  jarSpin: async () => { const j = jarNow(); if (!(j.total > 0)) return toast('الحصالة فاضية');
+    const pool = Object.keys(S.users); const winner = pool[Math.floor(Math.random() * pool.length)];
+    if (!confirm(`الحصالة فيها ${money(j.total)}. نلف ونشوف مين ياخدها؟`)) return;
+    await setDoc(doc(db,'carry','jar'), { payouts:[...(S.jarPay || []), { winner, total:j.total, holders:j.holders, at:Date.now(), by:me() }] });
+    toast(`🎉 ${uname(winner)} كسب الحصالة: ${money(j.total)}!`); },
   confirmTr: id => updateDoc(doc(db,'transfers',id), { confirmed:true, confirmedAt:serverTimestamp(), rejected:false }),
   rejectTr: async id => { if (confirm('متأكد إن الفلوس موصلتش؟ هيظهر للكل')) { await updateDoc(doc(db,'transfers',id), { rejected:true, rejectedAt:serverTimestamp() }); toast(thiefLine(id)); } },
   swearTr: async id => { await updateDoc(doc(db,'transfers',id), { rejected:false, rejectedAt:null }); toast('اتبعتله تاني يأكد'); },
@@ -877,15 +1335,20 @@ function priceFor(o, name){
   return +(S.catalog.find(m => m.name === name)?.price) || 0;
 }
 // الأصناف المعروضة للاختيار: الثابتة + أصناف المطعم، بأسعار المطعم
+// مطعم ليه منيو ← أصنافه هو بس · غير كده ← الأصناف الثابتة
+function menuOf(o){
+  const ri = (S.rests.find(x=>x.id===o.restaurantId)?.items) || [];
+  return ri.length ? ri : S.catalog;
+}
 function quickList(o){
-  const names = [...new Set([...S.catalog.map(m=>m.name), ...((S.rests.find(x=>x.id===o.restaurantId)?.items)||[]).map(m=>m.name)])];
+  const names = [...new Set(menuOf(o).map(m=>m.name))];
   return names.map(name => ({ name, price: priceFor(o, name) }));
 }
 function restModal(r = {}){
   const base = r.id ? (r.items||[]) : S.catalog.map(m => ({ name:m.name, price:m.price }));
   modal(r.id ? 'تعديل المطعم' : 'مطعم جديد', `
     <label>الاسم<input name="name" required value="${esc(r.name||'')}"></label>
-    <label>التليفون<input name="phone" type="tel" value="${esc(r.phone||'')}"></label>
+    <label>التليفون (واتساب)<input name="phone" type="tel" placeholder="01xxxxxxxxx" value="${esc(r.phone||'')}"></label>
     <div class="mut" style="font-size:13px;margin-bottom:6px">أسعار المطعم ده (اللي تسيبه فاضي هياخد السعر الافتراضي):</div>
     ${priceRows(base)}`,
     async f => {
@@ -900,8 +1363,14 @@ document.addEventListener('click', async e => {
   if (e.target.closest('[data-close]') || e.target.id === 'modal') return closeModal();
   const t = e.target.closest('[data-act]'); if (!t) return;
   e.preventDefault();
-  try{ await A[t.dataset.act]?.(t.dataset.id, t.dataset.x, t); }catch(err){ toast(errMsg(err)); }
+  // منع الدبل كليك: الضغطات على نفس الزرار بتتنفّذ ورا بعض، مش مع بعض
+  // (الضغطة التانية بتشوف نتيجة الأولى — فمفيش صنف يتضاف مرتين ولا طلب يتكرر)
+  const key = `${t.dataset.act}|${t.dataset.id||''}|${t.dataset.x||''}`;
+  const run = () => Promise.race([Promise.resolve(A[t.dataset.act]?.(t.dataset.id, t.dataset.x, t)), new Promise(r => setTimeout(r, 1500))]);
+  const p = (busy.get(key) || Promise.resolve()).then(run).catch(err => toast(errMsg(err)));
+  busy.set(key, p); p.finally(() => { if (busy.get(key) === p) busy.delete(key); });
 });
+const busy = new Map();
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 // رقم التحويل (انستاباي/محفظة) بيتغيّر مع اختيار الشخص
 document.addEventListener('change', e => { if (e.target.matches('#mf select[name=to]')) { const b = $('#paybox'); if (b) b.innerHTML = payBox(e.target.value); } if (e.target.id === 'rmonth'){ S.rm = e.target.value; render(); } });
@@ -932,7 +1401,8 @@ function vReport(){
   const big = people[0];
   const title = (label, p, val) => p ? `<div class="person"><div class="between"><span>${label}</span><b>${esc(uname(p.uid))}${val ? ` <span class="mut" style="font-weight:400">(${val})</span>` : ''}</b></div></div>` : '';
   return `<div class="between" style="margin:18px 0 10px"><h2 style="margin:0">تقرير الشهر</h2>
-    <select id="rmonth" style="width:auto;margin:0">${months.map(x => `<option value="${x}" ${x===m?'selected':''}>${mName(x)}</option>`).join('')}</select></div>
+    <div class="row" style="margin:0;flex-wrap:nowrap"><button class="btn sm" data-act="exportCsv" data-id="${m}" title="ملف يتفتح بـ Excel">تصدير Excel</button>
+    <select id="rmonth" style="width:auto;margin:0">${months.map(x => `<option value="${x}" ${x===m?'selected':''}>${mName(x)}</option>`).join('')}</select></div></div>
   ${!orders.length ? '<div class="card empty">مفيش طلبيات مقفولة في الشهر ده لسه</div>' : `
   <div class="stats">
     <div class="stat ok"><small>انت صرفت</small><b>${money(mine?.spent||0)}</b><small>${mine?.orders||0} طلبية${mine?.runs ? ` · نزلت ${mine.runs} مرة` : ''}</small></div>
@@ -964,7 +1434,152 @@ function payBox(uid){
   return p ? `<div class="card" style="background:var(--pri2);border-color:var(--pri);margin:0 0 10px;padding:10px 12px"><div class="between"><div><div class="mut" style="font-size:12px">حوّل على (انستاباي / محفظة):</div><b style="font-size:17px;direction:ltr;unicode-bidi:embed">${esc(p)}</b></div><button type="button" class="btn sm pri" data-act="copyTxt" data-id="${esc(p)}">نسخ</button></div></div>`
            : `<div class="mut" style="font-size:13px;margin:-4px 0 10px">${esc(uname(uid))} لسه مكتبش رقم التحويل بتاعه — يكتبه من «حسابي».</div>`;
 }
-window.addEventListener('hashchange', () => { S.otab = 'people'; render(); window.scrollTo(0,0); });
+// «مش النهارده» من الإشعار: بيفتح #skip/<id> ← يتسجل إنك مش هتطلب ويرجع للرئيسية
+function handleSkip(){ const m = location.hash.match(/^#skip\/(.+)$/); if (!m || !me()) return false;
+  setDoc(doc(db,'users',me()), { skips:{ [m[1]]: true } }, { merge:true }).then(() => toast('تمام — مش هنفكّرك بالطلبية دي')).catch(e => toast(errMsg(e)));
+  location.hash = 'home'; return true; }
+window.addEventListener('hashchange', () => { if (handleSkip()) return; S.otab = 'people'; render(); window.scrollTo(0,0); });
+
+/* ---------- تطبيق على الموبايل + أوفلاين ---------- */
+const LS = { get: k => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} } };
+let swReg = null, installEvt = null;
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').then(r => { swReg = r; }).catch(() => {});
+  navigator.serviceWorker.addEventListener('message', e => { if (e.data?.hash) location.hash = e.data.hash; });
+}
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; render(); });
+window.addEventListener('appinstalled', () => { installEvt = null; toast('اتسطّب على الموبايل'); render(); });
+const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+function netBar(){ const b = $('#netbar'); if (b) b.classList.toggle('on', !navigator.onLine); }
+window.addEventListener('online', () => { netBar(); toast('النت رجع — التعديلات بتتبعت'); });
+window.addEventListener('offline', netBar);
+netBar();
+
+/* ---------- الإشعارات (من غير سيرفر: بتشتغل والموقع/التطبيق مفتوح أو في الخلفية) ---------- */
+const notifOn = () => LS.get('ob_notif') === '1' && 'Notification' in window && Notification.permission === 'granted';
+/* ---------- إشعارات حقيقية (Web Push عن طريق Cloudflare Worker) ---------- */
+// بتوصل حتى لو الموقع مقفول. الاشتراك بيتحفظ في users/{uid}.push، واللي بيعمل الحدث بيبعت للـWorker.
+const PUSH_URL = 'https://office-breakfast-push.abdelrahme222.workers.dev';
+const VAPID_PUBLIC = 'BCfpE-xr3tSJSFP0UmI6sCsWnnxZMUI6-MrEpQisx9GA65Zl5IPibUMVzWXy8sIoIa1PNSD4gbSLGodQ2P5OQrI';
+const pushKey = ep => { let h = 0; for (const c of ep) h = (h * 31 + c.charCodeAt(0)) | 0; return 'd' + (h >>> 0).toString(36); };
+const u8 = b64 => { const s = atob(b64.replace(/-/g,'+').replace(/_/g,'/') + '==='.slice((b64.length + 3) % 4)); return Uint8Array.from(s, c => c.charCodeAt(0)); };
+const pushReady = () => PUSH_URL.startsWith('https://') && 'PushManager' in window && 'serviceWorker' in navigator;
+let myPushKey = null, pushErr = '', lastPush = null;
+async function readLastPush(){ try { const r = await (await caches.open('ob-meta')).match('./__last-push'); lastPush = r ? await r.json() : null; } catch { lastPush = null; } }
+readLastPush(); document.addEventListener('visibilitychange', () => { if (!document.hidden) readLastPush().then(render); });
+async function pushSubscribe(){
+  if (!pushReady() || Notification.permission !== 'granted') return false;
+  try {
+    const reg = swReg || await navigator.serviceWorker.ready;
+    const sub = (await reg.pushManager.getSubscription()) || await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:u8(VAPID_PUBLIC) });
+    const j = sub.toJSON(); myPushKey = pushKey(j.endpoint); pushErr = '';
+    if (!S.users[me()]?.push?.[myPushKey]) await setDoc(doc(db,'users',me()), { push:{ [myPushKey]:{ endpoint:j.endpoint, keys:j.keys, at:Date.now() } } }, { merge:true });
+    return true;
+  } catch (e) { console.warn('push subscribe', e); pushErr = (e && (e.name + ': ' + e.message)) || 'unknown'; render(); return false; }
+}
+async function pushUnsubscribe(){
+  try { const reg = swReg || await navigator.serviceWorker.ready; const sub = await reg.pushManager.getSubscription();
+    if (sub){ const k = pushKey(sub.endpoint); await sub.unsubscribe(); await setDoc(doc(db,'users',me()), { push:{ [k]:null } }, { merge:true }); } } catch {}
+  myPushKey = null;
+}
+// إرسال: uids = مين يوصله (افتراضي الكل) — مش بيتبعت لنفسك
+// kind: order | lunch | announce | poll | transfer — الأدمن يقدر يقفل أي نوع من «الإدارة»
+function pushSend(title, body, hash, uids, kind){
+  if (!PUSH_URL.startsWith('https://')) return Promise.resolve({ sent:0 });
+  if (kind && S.pushCfg?.[kind] === false) return Promise.resolve({ sent:0, off:true });
+  const subs = [];
+  for (const u of Object.values(S.users)){ if ((u.id === me() && !uids?.includes(me())) || (uids && !uids.includes(u.id)) || (kind && u.pushOff?.[kind])) continue;
+    for (const v of Object.values(u.push || {})) if (v?.endpoint && v.keys) subs.push({ endpoint:v.endpoint, keys:v.keys }); }
+  if (!subs.length) return Promise.resolve({ sent:0, none:true });
+  return fetch(PUSH_URL, { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ subs, title, body, hash }) }).then(r => r.json()).catch(e => ({ error:String(e) }));
+}
+const PUSH_KINDS = [['order','طلبية جديدة'],['lunch','طلبية الغدا'],['closed','قفل الطلبية ونصيبك'],['runner','العجلة اختارتك'],['remind','تذكير «لسه ماطلبتش»'],['announce','إعلان'],['poll','تصويت'],['transfer','تحويل مستني تأكيد'],['admin','إشعارات الأدمن'],['summary','ملخص الشهر']];
+function _noop(){
+}
+async function notify(title, body, hash){
+  if (document.visibilityState === 'visible') return toast(`${title} — ${body}`);
+  if (!notifOn() || myPushKey) return; // لو الجهاز مشترك في Push، الإشعار بيوصل من هناك
+  const opt = { body, icon:'icon-192.png', badge:'icon-192.png', tag: hash, data:{ hash }, lang:'ar', dir:'rtl' };
+  try { const reg = swReg || await navigator.serviceWorker?.ready; if (reg) return await reg.showNotification(title, opt); } catch {}
+  try { new Notification(title, opt); } catch {}
+}
+function notifyFrom(name, snap){
+  if (typeof snap.docChanges !== 'function' || snap.metadata.fromCache) return; // مستند واحد (زي config) مالوش docChanges
+  for (const ch of snap.docChanges()){
+    if (ch.type !== 'added' || ch.doc.metadata.hasPendingWrites) continue;
+    const d = ch.doc.data({ serverTimestamps:'estimate' });
+    if (Date.now() - tsOf(d.createdAt) > 15 * 60e3) continue;
+    if (name === 'orders' && d.status === 'open' && d.createdBy !== me())
+      notify('طلبية جديدة اتفتحت', `${uname(d.createdBy)} فتح «${d.title || 'طلبية'}»${d.restaurantName ? ' من ' + d.restaurantName : ''} — الحق اطلب`, '#order/' + ch.doc.id);
+    if (name === 'transfers' && d.toUid === me() && d.fromUid !== me() && !d.confirmed)
+      notify('تحويل مستني تأكيدك', `${uname(d.fromUid)} بيقول حوّلك ${money(d.amount)}${d.onBehalf ? ' على حساب ' + uname(d.onBehalf) : ''}`, '#transfers');
+  }
+}
+// لوحة إشعارات الأدمن: مين مشترك + جدول الأنواع (للكل / ليا)
+function vPushAdmin(){
+  const users = Object.values(S.users).sort((a,b) => (a.name||'').localeCompare(b.name||'','ar'));
+  const subd = u => Object.values(u.push||{}).some(v => v?.endpoint);
+  const yes = users.filter(subd), no = users.filter(u => !subd(u)), mineOn = notifOn();
+  const sw = (on, act, k, x, dis) => `<button class="sw ${on ? 'on' : ''}" ${dis ? 'disabled' : ''} data-act="${act}" data-id="${k}" data-x="${x}" aria-label="تبديل"><i></i></button>`;
+  return `<details class="subs"><summary><b>${yes.length}</b> من ${users.length} مشتركين — اعرف مين</summary>
+      <div class="subs-l">${yes.map(u => `<span class="chip on">✓ ${esc(u.name)}</span>`).join('')}${no.map(u => `<span class="chip">${esc(u.name)}</span>`).join('')}</div>
+      ${no.length ? `<div class="mut" style="font-size:12px;margin-top:6px">اللي مش مشتركين يشغّلوها من «حسابي» ← «شغّلها» — أو ابعتلهم إعلان يفكّرهم.</div>` : ''}</details>
+    <table class="ptab"><thead><tr><th>النوع</th><th>للكل</th><th>ليا</th></tr></thead><tbody>
+      ${PUSH_KINDS.map(([k,l]) => { const g = S.pushCfg?.[k] !== false, me_ = !S.users[me()]?.pushOff?.[k];
+        return `<tr class="${g ? '' : 'off'}"><td>${l}</td><td>${sw(g, 'pushCfg', k, g ? 0 : 1)}</td><td>${sw(g && me_, 'myPush', k, me_ ? 1 : 0, !g)}</td></tr>`; }).join('')}
+    </tbody></table>
+    ${mineOn ? '' : '<div class="mut" style="font-size:12px;margin:6px 0">انت نفسك مش مشترك — شغّلها من «التطبيق والإشعارات» تحت.</div>'}
+    <div class="mut" style="font-size:12px;margin:4px 0 0">«للكل» بيقفل النوع عن كل الناس · «ليا» ليك انت بس.</div>`;
+}
+function vApp(){
+  const can = 'Notification' in window, perm = can ? Notification.permission : 'denied', on = notifOn();
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  return `<h2>التطبيق والإشعارات</h2><div class="card">
+    <div class="between"><div><b>إشعار لما حد يفتح طلبية</b><div class="mut" style="font-size:13px">${!can ? (ios && !isStandalone() ? 'على الآيفون: سطّب الموقع على الشاشة الرئيسية الأول' : 'المتصفح ده مش بيدعم الإشعارات') : perm === 'denied' ? 'الإشعارات مقفولة من إعدادات المتصفح للموقع ده' : on ? 'شغّالة — وكمان لو حد حوّلك فلوس' : 'مقفولة'}</div></div>
+      ${can && perm !== 'denied' ? `<button class="btn ${on ? '' : 'pri'}" data-act="toggleNotif">${on ? 'اقفلها' : 'شغّلها'}</button>` : ''}</div>
+    ${on ? `<div style="margin-top:10px"><div class="mut" style="font-size:13px;margin-bottom:6px">عاوز إشعار لـ:</div><div class="row" style="flex-wrap:wrap;gap:6px">${PUSH_KINDS.filter(([k]) => S.pushCfg?.[k] !== false).map(([k,l]) => { const off = S.users[me()]?.pushOff?.[k]; return `<button class="btn sm ${off ? '' : 'pri'}" data-act="myPush" data-id="${k}" data-x="${off ? 0 : 1}">${off ? '✕' : '✓'} ${l}</button>`; }).join('')}</div></div>` : ''}
+    ${on ? `<div style="font-size:13px;margin-top:8px;padding:8px 10px;border-radius:10px;background:${myPushKey && S.users[me()]?.push?.[myPushKey] ? 'var(--pri2)' : 'var(--warnbg)'}">${
+      myPushKey && S.users[me()]?.push?.[myPushKey] ? '✅ الجهاز ده مسجّل — الإشعارات هتوصلك حتى والموقع مقفول'
+      : pushErr ? `⚠️ الجهاز ماتسجلش: <span dir="ltr" style="font-size:11px">${esc(pushErr)}</span><br>${/brave/i.test(navigator.userAgent) || navigator.brave ? 'لو بتستخدم Brave: الإعدادات ← Privacy and security ← فعّل «Use Google services for push messaging» وبعدين اقفلها وشغّلها تاني.' : 'اقفل الإشعارات وشغّلها تاني، ولو فضلت كده جرّب Chrome.'}`
+      : '⏳ بيسجّل الجهاز…'}
+      ${myPushKey ? `<div style="margin-top:6px;font-size:12px">${lastPush ? `آخر إشعار وصل للجهاز ده: «${esc(lastPush.title||'')}» ${new Date(lastPush.at).toLocaleString('ar-EG',{hour:'numeric',minute:'2-digit',day:'numeric',month:'short'})}` : 'لسه مفيش إشعار وصل للجهاز ده'}
+        <button class="btn sm" style="margin-inline-start:6px" data-act="pushSelf">جرّب على جهازي</button></div>` : ''}</div>` : ''}
+    <div class="mut" style="font-size:12px;margin-top:6px">الإشعار بيوصل حتى لو الموقع مقفول (على الآيفون لازم الموقع يكون متسطّب على الشاشة الرئيسية).</div>
+    ${isStandalone() ? '' : `<div class="between" style="margin-top:12px;border-top:1px solid var(--line);padding-top:12px"><div><b>سطّبه كتطبيق</b><div class="mut" style="font-size:13px">${installEvt ? 'أيقونة على الشاشة الرئيسية ويفتح من غير المتصفح' : ios ? 'من Safari: زرار المشاركة ← «Add to Home Screen»' : 'من قايمة المتصفح ← «Install app» أو «Add to Home screen»'}</div></div>
+      ${installEvt ? '<button class="btn pri" data-act="install">سطّب</button>' : ''}</div>`}
+  </div>`;
+}
+Object.assign(A, {
+  toggleNotif: async () => {
+    if (notifOn()) { LS.set('ob_notif', null); await pushUnsubscribe(); toast('الإشعارات اتقفلت'); return render(); }
+    const p = await Notification.requestPermission();
+    if (p !== 'granted') { toast('لازم توافق على الإشعارات من المتصفح'); return render(); }
+    LS.set('ob_notif', '1'); const ok = await pushSubscribe();
+    toast(ok ? 'الإشعارات اشتغلت — هتوصلك حتى لو الموقع مقفول 🔔' : 'الإشعارات اشتغلت (والموقع مفتوح بس)'); render();
+  },
+  install: async () => { if (!installEvt) return; installEvt.prompt(); await installEvt.userChoice; installEvt = null; render(); },
+  exportCsv: m => {
+    const orders = S.orders.filter(o => o.status === 'closed' && (o.day||'').startsWith(m)).sort((a,b) => (a.day||'').localeCompare(b.day||''));
+    if (!orders.length) return toast('مفيش طلبيات مقفولة في الشهر ده');
+    const q = v => { const s = String(v ?? ''); return /[",\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s; };
+    const rows = [['ملخص الشهر ' + m], ['الاسم','عدد الطلبيات','صرف'], ];
+    const per = {};
+    for (const o of orders) for (const p of orderCalc(o).parts){ const x = per[p.uid] ??= { n:0, s:0 }; x.n++; x.s += p.total; }
+    Object.entries(per).sort((a,b) => b[1].s - a[1].s).forEach(([u,x]) => rows.push([uname(u), x.n, r2(x.s)]));
+    const { net } = ledger();
+    rows.push([], ['الرصيد الحالي (موجب = ليه فلوس · سالب = عليه)'], ['الاسم','الرصيد']);
+    Object.keys(S.users).forEach(u => rows.push([uname(u), r2(net[u]||0)]));
+    rows.push([], ['التفاصيل'], ['اليوم','الطلبية','المطعم','اللي دفع','الاسم','الصنف','الكمية','السعر','الإجمالي','نصيبه من التوصيل','ملاحظة']);
+    for (const o of orders){ const c = orderCalc(o);
+      for (const p of c.parts) for (const it of p.items)
+        rows.push([o.day, o.title||'', o.restaurantName||'', o.payerUid ? uname(o.payerUid) : '', uname(p.uid), it.name, +it.qty||0, +it.price||0, r2((+it.qty||0)*(+it.price||0)), it === p.items[0] ? r2(c.share) : '', it.note||'']);
+    }
+    const blob = new Blob(['﻿' + rows.map(r => r.map(q).join(',')).join('\r\n')], { type:'text/csv;charset=utf-8' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `فطار-المكتب-${m}.csv`;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    toast('الملف نزل — افتحه بـ Excel');
+  },
+});
 
 onAuthStateChanged(auth, user => {
   stopListeners(); S.me = user; closeModal();
