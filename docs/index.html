@@ -296,12 +296,15 @@ function contribution(orders, transfers){
 
 /* ---------- الاستماع للبيانات (Realtime) ---------- */
 function startListeners(){
-  const L = (name, ref, fn) => S.unsubs.push(onSnapshot(ref, snap => { if (S.loaded[name]) try { notifyFrom(name, snap); } catch (e) { console.warn(e); } fn(snap); S.loaded[name]=true; render(); }, e => toast(errMsg(e))));
+  const L = (name, ref, fn) => S.unsubs.push(onSnapshot(ref, snap => { if (S.loaded[name]) try { notifyFrom(name, snap); } catch (e) { console.warn(e); } fn(snap); S.loaded[name]=true; render(); }, e => { if (e?.code === 'permission-denied' && (amPending() || !S.loaded.meDoc)) { S.loaded[name] = true; render(); return; } toast(errMsg(e)); }));
+  // حسابي: بيتعمل هنا (حتى لو لسه مستني موافقة الأدمن)
+  L('meDoc', doc(db,'users',me()), d => { const was = S.meDoc; S.meDoc = d.exists() ? d.data() : null;
+    if (!d.exists()) setDoc(doc(db,'users',me()), { name: S.me.displayName || S.me.email.split('@')[0], email:S.me.email, payInfo:'', createdAt:serverTimestamp() }).catch(()=>{});
+    if (was && was.approved !== true && S.meDoc?.approved === true) location.reload(); });
   L('users', collection(db,'users'), snap => {
-    S.users = {}; snap.forEach(d => S.users[d.id] = { id:d.id, ...d.data() });
+    S.allUsers = {}; snap.forEach(d => S.allUsers[d.id] = { id:d.id, ...d.data() }); applyUsers();
     if ((notifOn() || !PUSH_HOST) && !myPushKey && !S._pushTried){ S._pushTried = true; pushSubscribe(); }
     if (!S._skipChecked){ S._skipChecked = true; setTimeout(handleSkip, 0); }
-    if (!S.users[me()]) setDoc(doc(db,'users',me()), { name: S.me.displayName || S.me.email.split('@')[0], email:S.me.email, payInfo:'', createdAt:serverTimestamp() }).catch(()=>{});
   });
   L('orders', query(collection(db,'orders'), orderBy('createdAt','desc')), snap => {
     S.orders = snap.docs.map(d => ({ id:d.id, ...d.data({serverTimestamps:'estimate'}) }));
@@ -318,6 +321,7 @@ function startListeners(){
   });
   L('config', doc(db,'config','app'), d => {
     S.admins = d.exists() ? (d.data().admins || []) : null;
+    S.approval = d.exists() && d.data().approval === true; S.weeklyOn = !d.exists() || d.data().weeklyOn !== false; S.weekSent = d.exists() ? d.data().weekSent || '' : ''; applyUsers();
     const an = d.exists() ? (d.data().announce || null) : null, prev = S.announce;
     if (S.loaded.config && an?.text && an.at !== prev?.at && an.by !== me()) notify('إعلان من الأدمن', an.text, '#home');
     S.announce = an;
@@ -344,6 +348,12 @@ function startListeners(){
   L('complaints', collection(db,'complaints'), snap => { S.complaints = snap.docs.map(d => ({ id:d.id, ...d.data() })); });
   L('catalog', doc(db,'config','catalog'), d => { S.catalog = d.exists() ? (d.data().items || []) : DEFAULT_CATALOG.map(name => ({ name, price:0 })); });
 }
+// موافقة الأدمن: لو شغالة، اللي لسه ماتوافقش عليه مابيظهرش في أي قايمة
+function applyUsers(){ const all = S.allUsers || {}; S.users = {}; S.pending = [];
+  for (const [id, u] of Object.entries(all)) (!S.approval || u.approved === true || S.admins?.includes(id) ? (S.users[id] = u) : S.pending.push(u)); }
+function amPending(){ return !!(S.approval && S.meDoc && S.meDoc.approved !== true && !isAdmin()); }
+function vPending(){ return `<div class="card" style="max-width:420px;margin:40px auto;text-align:center">${S.meDoc?.rejected ? `<div style="font-size:42px">🚫</div><h2 style="margin:8px 0">الأدمن رفض الحساب ده</h2><p class="mut">لو ده غلط كلّم الأدمن.</p>` : `<div style="font-size:42px">⏳</div><h2 style="margin:8px 0">مستني موافقة الأدمن</h2>
+  <p class="mut">حسابك (${esc(S.me.email)}) اتعمل، وأول ما الأدمن يوافق هتدخل على طول.</p>`}<button class="btn" data-act="logout">خروج</button></div>`; }
 function stopListeners(){ S.unsubs.forEach(u=>u()); S.unsubs=[]; S.loaded={}; watchNotes(null); if (AU.un) AU.un(); AU.un = null; AU.mode = null; }
 // كاتب الشكوى: الأدمن بس يشوف الكل، وكل واحد يشوف شكاويه بس (علشان يمسحها)
 const AU = { un:null, mode:null };
@@ -369,9 +379,11 @@ function render(){ if (raf) return; raf = requestAnimationFrame(()=>{ raf=0; doR
 function doRender(){
   const app = $('#app');
   if (!S.me){ app.innerHTML = vAuth(); return; }
+  if (S.loaded.config && S.loaded.meDoc && amPending()){ app.innerHTML = vPending(); return; }
   if (!['users','orders','items','transfers','rests','config','carry','catalog'].every(k=>S.loaded[k])){ app.innerHTML = '<div class="loading">جاري تحميل البيانات…</div>'; return; }
   const ae = document.activeElement, aid = ae?.id, s1 = ae?.selectionStart, s2 = ae?.selectionEnd;
   const [route, arg] = (location.hash.slice(1) || 'home').split('/');
+  if (!S._wkChecked) setTimeout(autoWeekly, 3000);
   watchNotes(route === 'order' ? arg : null);
   const V = { home:vHome, order:()=>vOrder(arg), history:vHistory, money:vMoney, transfers:vTransfers, menus:vMenus, profile:vProfile, report:vReport, lunch:vLunch };
   document.documentElement.classList.toggle('ramadan', !!S.ramadan);
@@ -544,6 +556,33 @@ function vComplaints(){
     ${list.length ? list.map(c => `<div class="cmp">«${esc(c.text)}»<div class="mut" style="font-size:12px">${new Date(c.at).toLocaleString('ar-EG',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})}${!isAdmin() && (c.by || c.rev) ? ` · <b>من: ${esc(uname(c.by || c.rev))}</b>${c.rev ? ' 🕵️ الأدمن كشفه' : ''}` : ''}${isAdmin() ? ` · <b>من: ${esc(uname(S.cAuthors?.[c.id] || c.by) || '؟')}</b>${!c.by && S.cAuthors?.[c.id] ? ` · <a href="#" data-act="cReveal" data-id="${c.id}">${c.rev ? '🙈 اخفيه' : '🕵️ اكشفه للكل'}</a>` : ''} · <a href="#" data-act="cDel" data-id="${c.id}" class="bad">امسحها</a>` : S.cAuthors?.[c.id] === me() ? ` · <a href="#" data-act="cDel" data-id="${c.id}" class="bad">امسح شكوتي</a>` : ''}</div>${cReacts(c)}</div>`).join('') : '<div class="mut" style="font-size:13px;margin-top:6px">مفيش شكاوى… لسه 👀</div>'}
     ${all.length > 3 ? `<a href="#" data-act="cAll" class="mut" style="font-size:13px">${S.cAll ? 'اقل' : `كل الشكاوى (${all.length})`}</a>` : ''}</div>`;
 }
+function vPendingList(){ const p = S.pending || []; if (!p.length) return '';
+  return `<div class="card" style="margin-top:6px;border-color:var(--warn,#e0a800)"><b>⏳ ${p.length} مستني موافقتك</b>${p.map(u => `<div class="between" style="padding:6px 0;border-bottom:1px solid var(--line)"><span>${esc(u.name || '—')} <span class="mut" style="font-size:12px">${esc(u.email || '')}</span></span><span class="row"><button class="btn sm pri" data-act="approveUser" data-id="${u.id}">وافق ✓</button><button class="btn sm dan" data-act="rejectUser" data-id="${u.id}">ارفض</button></span></div>`).join('')}</div>`; }
+// ملخص الأسبوع: آخر ٧ أيام لحد الخميس — كل واحد أرقامه في إشعار، وللكل رسالة في الموقع
+function weekAnchor(){ const d = new Date(); const back = (d.getDay() - 4 + 7) % 7; d.setDate(d.getDate() - back); return d; }
+function weekStats(endDay){ const end = new Date(endDay + 'T00:00'), start = new Date(end); start.setDate(start.getDate() - 6); const from = ymd(start);
+  const per = {}, qty = {}, who = {}; let total = 0, n = 0;
+  for (const o of S.orders.filter(o => o.status === 'closed' && o.day >= from && o.day <= endDay)){ n++;
+    for (const p of orderCalc(o).parts){ const x = per[p.uid] ??= { spent:0, n:0, qty:{} }; x.spent += p.total; x.n++; total += p.total;
+      for (const it of p.items){ const q = +it.qty || 0; x.qty[it.name] = (x.qty[it.name]||0) + q; qty[it.name] = (qty[it.name]||0) + q; (who[it.name] ??= {})[p.uid] = (who[it.name][p.uid]||0) + q; } } }
+  const top = Object.entries(qty).sort((a,b) => b[1] - a[1])[0]?.[0];
+  const king = top ? Object.entries(who[top]).sort((a,b) => b[1] - a[1])[0] : null;
+  return { from, per, total, n, top, king }; }
+async function sendWeekly(manual){
+  const end = ymd(manual ? new Date() : weekAnchor()), w = weekStats(end);
+  if (!w.n){ if (manual) toast('مفيش طلبيات مقفولة في آخر ٧ أيام'); return; }
+  if (!manual) await updateDoc(doc(db,'config','app'), { weekSent: end });
+  const title = '📅 ملخص الأسبوع';
+  const body = `المكتب صرف ${money(w.total)} على ${w.n} طلبية · أكتر صنف: ${w.top}${w.king ? ` · ملك ${w.top} 👑: ${uname(w.king[0])} (×${r2(w.king[1])})` : ''}`;
+  const msg = { id: Math.random().toString(36).slice(2, 10), title, body, to: null, by: me(), at: Date.now() };
+  await updateDoc(doc(db,'config','app'), { inbox: [...(S.inbox || []).filter(m => m.at > Date.now() - 7 * 864e5), msg].slice(-15), ...(manual ? { weekSent: end } : {}) });
+  let sent = 0;
+  for (const [u, x] of Object.entries(w.per)){ const fav = Object.entries(x.qty).sort((a,b) => b[1] - a[1])[0]?.[0] || '—';
+    pushSend(title, `صرفت ${money(x.spent)} على ${x.n} طلبية الأسبوع ده — أكتر حاجة: ${fav}. ${body.split(' · ').slice(-1)[0]}`, '#home', [u], 'summary'); sent++; }
+  if (manual) toast(`اتبعت لـ ${sent} 📅`); }
+function autoWeekly(){ if (S._wkChecked || !isAdmin() || !S.weeklyOn || !PUSH_HOST) return; S._wkChecked = true;
+  const a = weekAnchor(), now = new Date(); if (now.getDay() === 4 && now.getHours() < 12) return;
+  if (S.weekSent === ymd(a)) return; sendWeekly(false).catch(e => console.warn(e)); }
 function vHome(){
   const t = myTotals();
   const open = S.orders.filter(o => o.status==='open');
@@ -557,6 +596,7 @@ function vHome(){
   </div>
   ${S.ramadan ? `<div class="rmd">رمضان كريم 🌙🏮<div style="font-size:13px;font-weight:400;opacity:.85">الطلبية على المغرب… واللي يفطر قبل الأذان يدفع للحصالة 😇</div></div>` : ''}
   ${vJar()}
+  ${isAdmin() && (S.pending||[]).length ? `<a href="#profile" class="card" style="display:block;margin-top:10px"><span class="pill warn">${S.pending.length}</span> حساب جديد مستني موافقتك</a>` : ''}
   ${pend.length?`<a href="#transfers" class="card" style="display:block;margin-top:10px"><span class="pill warn">${pend.length}</span> تحويل محتاج تأكيدك إنه وصلك</a>`:''}
   ${caught.length?`<a href="#transfers" class="card" style="display:block;margin-top:10px;border-color:var(--bad)"><span class="pill cancelled">${esc(thiefLine(caught[0].id))}</span> ${esc(uname(caught[0].toUid))} بيقول التحويل بتاعك (${money(caught[0].amount)}) موصلش</a>`:''}
   <div class="row" style="margin-top:12px">
@@ -633,14 +673,14 @@ function vOrder(id){
     </div>` : ''}
     <div class="row" style="margin-top:12px"><button class="btn pri" data-act="copySum" data-id="${o.id}">انسخ الطلبية كلها</button>
       ${waNum(o) ? `<a class="btn" style="background:#25d366;border-color:#25d366;color:#fff" target="_blank" rel="noopener" href="https://wa.me/${waNum(o)}?text=${encodeURIComponent(restText(o))}">ابعتها للمطعم واتساب</a>` : `<a class="btn" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(summaryText(o))}">ابعت واتساب</a>`}</div>
-    ${!waNum(o) ? `<div class="mut" style="font-size:12px;margin-top:4px">${o.restaurantId ? `علشان تبعت للمطعم على طول: <a href="#" data-act="editRest" data-id="${o.restaurantId}" style="color:var(--pri);font-weight:600">ضيف رقمه</a>` : 'لو اخترت المطعم من المنيوهات وليه رقم، هيظهر زرار يبعت له على طول'}</div>` : ''}
+    ${!waNum(o) ? `<div class="mut" style="font-size:12px;margin-top:4px">${o.restaurantId ? (canRest(S.rests.find(r => r.id === o.restaurantId)) ? `علشان تبعت للمطعم على طول: <a href="#" data-act="editRest" data-id="${o.restaurantId}" style="color:var(--pri);font-weight:600">ضيف رقمه</a>` : 'المطعم ده مالوش رقم — قول لصاحب المنيو أو الأدمن يضيفه') : 'لو اخترت المطعم من المنيوهات وليه رقم، هيظهر زرار يبعت له على طول'}</div>` : ''}
     <div class="row" style="margin-top:8px"><button class="btn sm pri" data-act="wheel" data-id="${o.id}">مين هينزل؟ (العجلة)</button><button class="btn sm" data-act="pdf" data-id="${o.id}">PDF الطلبية</button><button class="btn sm" data-act="cloneOrder" data-id="${o.id}">اعمل زيها النهارده</button></div>
   </div>
   <div class="between" style="margin:14px 0 8px;flex-wrap:wrap">
     <div class="seg"><button class="${S.otab==='people'?'on':''}" data-act="otab" data-id="people">بالأشخاص</button><button class="${S.otab==='sum'?'on':''}" data-act="otab" data-id="sum">التجميع</button><button class="${S.otab==='notes'?'on':''}" data-act="otab" data-id="notes">ملاحظات${(S.notes[o.id]||[]).length?` (${S.notes[o.id].length})`:''}</button></div>
     ${open ? `<div class="row">${lastMyItems(o).length && !(S.items[o.id]||[]).some(i=>i.uid===me()) ? `<button class="btn" data-act="repeatLast" data-id="${o.id}" title="${esc(lastMyItems(o).map(i => i.name + (i.qty>1 ? ' ×' + r2(i.qty) : '')).join('، '))}">🔁 طلبي المعتاد <small class="mut">(${esc((t => t.length > 22 ? t.slice(0, 21) + '…' : t)(lastMyItems(o).map(i => i.name).join('، ')))})</small></button>`:''}<button class="btn pri" data-act="addItem" data-id="${o.id}">+ أضف طلبك</button></div>` : ''}
   </div>
-  ${open ? `<div class="card"><div class="mut" style="font-size:13px;margin-bottom:6px">اختار بضغطة (كل ضغطة = واحد زيادة) · <a href="#" data-act="editCatalog" style="color:var(--pri);font-weight:600">الأسعار</a></div>${quickList(o).length > 12 ? `<input id="qq" placeholder="دوّر على صنف" value="${esc(S.qq||'')}" style="margin:0 0 8px">` : ''}<div class="chips" style="margin:0;max-height:260px;overflow:auto">${quickList(o).filter(m => !S.qq || m.name.includes(S.qq.trim())).map(m => { const q = (S.items[o.id]||[]).filter(i=>i.uid===me() && i.name===m.name && !i.note).reduce((a,i)=>a+(+i.qty||0),0); return `<button class="chip ${q?'on':''}" data-act="quick" data-id="${o.id}" data-x="${esc(m.name)}">${esc(m.name)}${m.price?` <small>${money(m.price)}</small>`:''}${q?` <b>×${r2(q)}</b>`:''}</button>`; }).join('')}</div></div>` : ''}
+  ${open ? `<div class="card"><div class="mut" style="font-size:13px;margin-bottom:6px">اختار بضغطة (كل ضغطة = واحد زيادة)${isAdmin() ? ' · <a href="#" data-act="editCatalog" style="color:var(--pri);font-weight:600">الأسعار</a>' : ''}</div>${quickList(o).length > 12 ? `<input id="qq" placeholder="دوّر على صنف" value="${esc(S.qq||'')}" style="margin:0 0 8px">` : ''}<div class="chips" style="margin:0;max-height:260px;overflow:auto">${quickList(o).filter(m => !S.qq || m.name.includes(S.qq.trim())).map(m => { const q = (S.items[o.id]||[]).filter(i=>i.uid===me() && i.name===m.name && !i.note).reduce((a,i)=>a+(+i.qty||0),0); return `<button class="chip ${q?'on':''}" data-act="quick" data-id="${o.id}" data-x="${esc(m.name)}">${esc(m.name)}${m.price?` <small>${money(m.price)}</small>`:''}${q?` <b>×${r2(q)}</b>`:''}</button>`; }).join('')}</div></div>` : ''}
   ${S.otab==='people' ? `<div class="card">${people}</div>` : S.otab==='notes' ? vNotes(o) : `<div class="card">
     <pre class="sum">${esc(summaryText(o))}</pre>
     <div class="row"><button class="btn" data-act="copySum" data-id="${o.id}">انسخ</button>
@@ -736,12 +776,12 @@ function dayOfTs(x){ const d = new Date(tsOf(x)); return `${d.getFullYear()}-${S
 /* ---------- المنيوهات ---------- */
 function vMenus(){
   return `<h2>المنيوهات</h2>
-  <div class="card"><div class="between"><h3>الأصناف الثابتة</h3><button class="btn sm pri" data-act="editCatalog">الأسعار</button></div>
+  <div class="card"><div class="between"><h3>الأصناف الثابتة</h3>${isAdmin() ? '<button class="btn sm pri" data-act="editCatalog">الأسعار</button>' : '<span class="mut" style="font-size:12px">🔒 الأدمن بس</span>'}</div>
     <div class="chips" style="margin:6px 0 0">${S.catalog.map(m => `<span class="chip">${esc(m.name)}${m.price?` <small>${money(m.price)}</small>`:''}</span>`).join('')}</div>
     <p class="mut" style="font-size:12px;margin:8px 0 0">بتظهر في كل طلبية للاختيار بضغطة. لو المطعم ليه سعر تاني للصنف، اكتبه في منيو المطعم وهو اللي هيتحسب.</p></div>
   <p class="mut">ضيف المطاعم وأسعارها مرة واحدة، وبعدها الطلب بيبقى بضغطة.</p>
   ${S.rests.length ? `<div class="grid">${S.rests.map(r => `<div class="card">
-    <div class="between"><h3>${esc(r.name)}</h3><button class="btn sm" data-act="editRest" data-id="${r.id}">تعديل</button></div>
+    <div class="between"><h3>${esc(r.name)}</h3>${canRest(r) ? `<button class="btn sm" data-act="editRest" data-id="${r.id}">تعديل</button>` : `<span class="mut" style="font-size:12px">🔒 ${esc(uname(r.createdBy) || 'الأدمن')}</span>`}</div>
     ${r.phone?`<div class="mut" style="font-size:13px"><a href="tel:${esc(r.phone)}">${esc(r.phone)}</a></div>`:''}
     ${(r.items||[]).map(m=>`<div class="it"><span class="n">${esc(m.name)}</span><span class="p mut">${money(m.price)}</span></div>`).join('') || '<div class="mut">مفيش أصناف</div>'}
   </div>`).join('')}</div>` : '<div class="card empty">مفيش منيوهات لسه</div>'}
@@ -777,6 +817,13 @@ function vAdmin(){
     <h3>تنظيف البيانات القديمة (علشان الليمت المجاني)</h3>
     <p class="mut" style="margin-top:0;font-size:13px">بيمسح الطلبيات المقفولة/الملغية والتحويلات المتأكدة الأقدم من المدة اللي تختارها — <b>والحساب مبيضيعش</b>: رصيد كل اتنين بيترحّل قبل المسح. الطلبيات المفتوحة والتحويلات اللي مستنية تأكيد مبتتمسحش.</p>
     <div class="row">${[7,30,90].map(n => { const d = dayOfTs({toMillis:()=>Date.now()-n*864e5}); return `<button class="btn" data-act="cleanup" data-id="${n}">أقدم من ${n} يوم (${old(d).length})</button>`; }).join('')}</div>
+    <h3 style="margin-top:16px">🔐 موافقة على الحسابات الجديدة</h3>
+    <p class="mut" style="margin-top:0;font-size:13px">لو شغالة: أي حد يعمل حساب جديد مش هيشوف حاجة لحد ما أدمن يوافق عليه. الموجودين دلوقتي بيتوافق عليهم تلقائي.</p>
+    <div class="row" style="margin-bottom:6px"><button class="btn sm ${S.approval ? 'pri' : ''}" data-act="approvalSet" data-x="${S.approval ? '0' : '1'}">${S.approval ? '✓ الموافقة شغالة' : '✕ الموافقة مقفولة'}</button></div>
+    ${vPendingList()}
+    <h3 style="margin-top:16px">📅 ملخص الأسبوع</h3>
+    <p class="mut" style="margin-top:0;font-size:13px">كل خميس (أول ما أدمن يفتح الموقع بعد الضهر): كل واحد يوصله صرف كام في الأسبوع، وللكل رسالة فيها إجمالي المكتب وأكتر صنف و«ملكه» 👑.${S.weekSent ? ` آخر ملخص: ${esc(S.weekSent)}` : ''}</p>
+    <div class="row" style="margin-bottom:6px"><button class="btn sm ${S.weeklyOn ? 'pri' : ''}" data-act="weeklySet" data-x="${S.weeklyOn ? '0' : '1'}">${S.weeklyOn ? '✓ تلقائي شغال' : '✕ التلقائي مقفول'}</button><button class="btn sm" data-act="weeklyNow">ابعته دلوقتي</button></div>
     <h3 style="margin-top:16px">🔔 الإشعارات</h3>
     ${vPushAdmin()}
     <div class="row" style="margin-top:8px"><button class="btn sm pri" data-act="pushAdmin">📣 ابعت إشعار</button><button class="btn sm" data-act="pushSummary">📊 ملخص الشهر</button><button class="btn sm" data-act="pushTest">إشعار تجربة</button></div>
@@ -1148,6 +1195,17 @@ const A = {
         return setDoc(doc(db,'config','app'), { cOpen: f.get('open') === 'on', cNamed, cBan }, { merge:true }).then(() => toast('اتحفظ ✅')).catch(e => toast(errMsg(e))); }),
   cDel: id => { if (!confirm('تمسح الشكوى دي؟')) return; const b = writeBatch(db); b.delete(doc(db,'complaints',id)); b.delete(doc(db,'complaintAuthors',id)); return b.commit().catch(e => toast(errMsg(e))); },
   cAll: () => { S.cAll = !S.cAll; render(); },
+  approvalSet: (_, x) => { const on = x === '1';
+    if (on && !confirm('تشغيل الموافقة: الحسابات الموجودة دلوقتي هتتوافق تلقائي، وأي حساب جديد يستنى موافقتك. تمام؟')) return;
+    const b = writeBatch(db);
+    if (on) for (const [id, u] of Object.entries(S.allUsers || {})) if (u.approved !== true) b.update(doc(db,'users',id), { approved: true });
+    b.set(doc(db,'config','app'), { approval: on }, { merge:true });
+    return b.commit().then(() => toast(on ? 'الموافقة اشتغلت 🔐' : 'الموافقة اتقفلت')).catch(e => toast(errMsg(e))); },
+  approveUser: id => updateDoc(doc(db,'users',id), { approved: true }).then(() => toast(`اتوافق على ${S.allUsers?.[id]?.name || ''} ✅`)).catch(e => toast(errMsg(e))),
+  rejectUser: id => { if (!confirm(`ترفض ${S.allUsers?.[id]?.name || 'الحساب ده'}؟ مش هيقدر يدخل.`)) return;
+    return updateDoc(doc(db,'users',id), { approved: false, rejected: true }).then(() => toast('اترفض')).catch(e => toast(errMsg(e))); },
+  weeklySet: (_, x) => setDoc(doc(db,'config','app'), { weeklyOn: x === '1' }, { merge:true }).then(() => toast(x === '1' ? 'ملخص الأسبوع التلقائي اشتغل 📅' : 'اتقفل')),
+  weeklyNow: () => { if (!confirm('تبعت ملخص آخر ٧ أيام للكل دلوقتي؟')) return; return sendWeekly(true); },
   cReveal: id => { const c = (S.complaints || []).find(x => x.id === id), a = S.cAuthors?.[id]; if (!c || !a) return;
     if (!c.rev && !confirm(`تكشف إن ${uname(a)} هو اللي كتبها للكل؟`)) return;
     return updateDoc(doc(db,'complaints',id), { rev: c.rev ? deleteField() : a }).then(() => toast(c.rev ? 'اتخفى تاني 🙈' : 'اتكشف 🕵️')).catch(e => toast(errMsg(e))); },
@@ -1207,7 +1265,7 @@ const A = {
         const target = uids || Object.keys(S.users), subd = target.filter(u => Object.values(S.users[u]?.push||{}).some(v => v?.endpoint) && !S.users[u]?.pushOff?.admin);
         const msg = { id: Math.random().toString(36).slice(2, 10), title, body, to: uids, by: me(), at: Date.now() };
         updateDoc(doc(db,'config','app'), { inbox: [...(S.inbox || []).filter(m => m.at > Date.now() - 7 * 864e5), msg].slice(-15) }).catch(e => toast(errMsg(e)));
-        pushSend(title, body, '#home', uids, 'admin').then(r => toast(r?.off ? '✅ اتحفظت في الموقع — هتظهر لهم أول ما يفتحوا (إشعارات الأدمن مقفولة)' : r?.none ? '✅ اتحفظت في الموقع — هتظهر لهم أول ما يفتحوا' : r?.error ? '✅ اتحفظت في الموقع · ⚠️ الإشعار ماتبعتش: ' + r.error : `📣 وصل لـ ${r.sent} جهاز + اتحفظت في الموقع`));
+        pushSend(title, body, '#home', [...new Set([...target, me()])], 'admin').then(r => toast(r?.off ? '✅ اتحفظت في الموقع — هتظهر لهم أول ما يفتحوا (إشعارات الأدمن مقفولة)' : r?.none ? '✅ اتحفظت في الموقع — هتظهر لهم أول ما يفتحوا' : r?.error ? '✅ اتحفظت في الموقع · ⚠️ الإشعار ماتبعتش: ' + r.error : `📣 وصل لـ ${r.sent} جهاز + اتحفظت في الموقع`));
         if (f.get('ann')) return updateDoc(doc(db,'config','app'), { announce:{ text:body, by:me(), at:Date.now() } }); }, 'ابعت'); },
   // ملخص الشهر: إشعار شخصي لكل واحد — صرف كام، كام طلبية، أكتر صنف، ولقب على الماشي
   pushSummary: () => {
@@ -1319,7 +1377,7 @@ const A = {
   },
   addRow: () => { $('#prows').insertAdjacentHTML('beforeend', priceRow()); const ins = $('#prows').querySelectorAll('input[name^="n_"]'); ins[ins.length-1].focus(); },
   bulkRows: () => { const b = $('#bulkbox'); b.style.display = 'block'; b.querySelector('textarea').focus(); },
-  editCatalog: () => modal('الأصناف والأسعار', `
+  editCatalog: () => !isAdmin() ? toast('🔒 الأدمن بس') : modal('الأصناف والأسعار', `
     <p class="mut" style="margin-top:0;font-size:13px">اكتب سعر كل صنف مرة واحدة. لو مطعم معيّن سعره مختلف، عدّله من منيو المطعم. سيب الاسم فاضي علشان تمسح الصنف.</p>
     ${priceRows(S.catalog)}`,
     f => setDoc(doc(db,'config','catalog'), { items: readPriceRows(f), updatedBy:me(), updatedAt:serverTimestamp() })),
@@ -1368,7 +1426,7 @@ const A = {
   delTr: async id => { if (confirm('تمسح التحويل ده؟')) await deleteDoc(doc(db,'transfers',id)); },
 
   newRest: () => restModal(),
-  editRest: id => restModal(S.rests.find(r=>r.id===id)),
+  editRest: id => { const r = S.rests.find(r=>r.id===id); if (!canRest(r)) return toast('🔒 صاحب المنيو أو الأدمن بس'); return restModal(r); },
 };
 // "الاسم | السعر" لكل سطر — السعر اختياري (0 = استخدم السعر الافتراضي)
 function parseLines(txt){
@@ -1399,15 +1457,20 @@ async function addItemFromForm(o, f){
   await addW('i', collection(db,'orders',o.id,'items'), { uid:me(), orderId:o.id, name, qty:+f.get('qty'), price, note:f.get('note').trim(), createdAt:serverTimestamp() });
   await savePrice(o, name, price).catch(()=>{});
 }
+// المنيوهات: الأدمن وصاحب المنيو بس يعدّلوا · الأصناف الثابتة للأدمن بس
+const canRest = r => isAdmin() || (!!r && r.createdBy === me());
 async function savePrice(o, name, price){
   if (!price || price === priceFor(o, name)) return;
   const r = S.rests.find(x => x.id === o.restaurantId);
+  if (r && !canRest(r)) return;
+  if (!r && !isAdmin()) return;
   if (r){ // سعر خاص بالمطعم
     const items = (r.items||[]).map(m => ({...m})), m = items.find(x => x.name === name);
     if (m) m.price = price; else items.push({ name, price });
     await updateDoc(doc(db,'restaurants',r.id), { items });
   }
   const cat = S.catalog.map(m => ({...m})), c = cat.find(m => m.name === name);
+  if (!isAdmin()) return;
   if (c && !+c.price){ c.price = price; await setDoc(doc(db,'config','catalog'), { items:cat, updatedBy:me(), updatedAt:serverTimestamp() }); }
   else if (!c && !r){ cat.push({ name, price }); await setDoc(doc(db,'config','catalog'), { items:cat, updatedBy:me(), updatedAt:serverTimestamp() }); }
 }
@@ -1546,6 +1609,11 @@ const notifOn = () => LS.get('ob_notif') === '1' && 'Notification' in window && 
 // بتوصل حتى لو الموقع مقفول. الاشتراك بيتحفظ في users/{uid}.push، واللي بيعمل الحدث بيبعت للـWorker.
 const PUSH_URL = 'https://office-breakfast-push.abdelrahme222.workers.dev';
 const VAPID_PUBLIC = 'BCfpE-xr3tSJSFP0UmI6sCsWnnxZMUI6-MrEpQisx9GA65Zl5IPibUMVzWXy8sIoIa1PNSD4gbSLGodQ2P5OQrI';
+// الأدمن بيشيل الأجهزة اللي اشتراكها مات (علشان العدد يبقى مظبوط ونعرف مين محتاج يفعّل تاني)
+function cleanDead(dead){ const ds = new Set(dead);
+  for (const u of Object.values(S.allUsers || S.users)){ const upd = {};
+    for (const [k, v] of Object.entries(u.push || {})) if (v?.endpoint && ds.has(v.endpoint)) upd['push.' + k] = deleteField();
+    if (Object.keys(upd).length) updateDoc(doc(db,'users',u.id), upd).catch(() => {}); } }
 const pushKey = ep => { let h = 0; for (const c of ep) h = (h * 31 + c.charCodeAt(0)) | 0; return 'd' + (h >>> 0).toString(36); };
 const u8 = b64 => { const s = atob(b64.replace(/-/g,'+').replace(/_/g,'/') + '==='.slice((b64.length + 3) % 4)); return Uint8Array.from(s, c => c.charCodeAt(0)); };
 const pushReady = () => PUSH_URL.startsWith('https://') && 'PushManager' in window && 'serviceWorker' in navigator;
@@ -1581,9 +1649,9 @@ function pushSend(title, body, hash, uids, kind){
   if (!subs.length) return Promise.resolve({ sent:0, none:true });
   return (auth.currentUser ? auth.currentUser.getIdToken() : Promise.resolve('')).catch(() => '')
     .then(tok => fetch(PUSH_URL, { method:'POST', headers:{ 'Content-Type':'application/json', ...(tok ? { Authorization:'Bearer ' + tok } : {}) }, body:JSON.stringify({ subs, title, body, hash }) }))
-    .then(r => r.json()).then(j => j?.error === 'rate' ? { ...j, error:'وصلت للحد — استنى شوية' } : j).catch(e => ({ error:String(e) }));
+    .then(r => r.json()).then(j => { if (j?.dead?.length && isAdmin()) cleanDead(j.dead); return j?.error === 'rate' ? { ...j, error:'وصلت للحد — استنى شوية' } : j; }).catch(e => ({ error:String(e) }));
 }
-const PUSH_KINDS = [['order','طلبية جديدة'],['lunch','طلبية الغدا'],['closed','قفل الطلبية ونصيبك'],['runner','العجلة اختارتك'],['remind','تذكير «لسه ماطلبتش»'],['announce','إعلان'],['poll','تصويت'],['transfer','تحويل مستني تأكيد'],['admin','إشعارات الأدمن'],['summary','ملخص الشهر']];
+const PUSH_KINDS = [['order','طلبية جديدة'],['lunch','طلبية الغدا'],['closed','قفل الطلبية ونصيبك'],['runner','العجلة اختارتك'],['remind','تذكير «لسه ماطلبتش»'],['announce','إعلان'],['poll','تصويت'],['transfer','تحويل مستني تأكيد'],['admin','إشعارات الأدمن'],['summary','ملخص الأسبوع/الشهر']];
 function _noop(){
 }
 async function notify(title, body, hash){

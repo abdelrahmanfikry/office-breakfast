@@ -1,6 +1,6 @@
 // فطار المكتب — Service Worker: يخلّي الموقع يتسطّب ويفتح من غير نت
 // زوّد رقم النسخة مع أي تعديل في الملفات علشان الكاش القديم يتمسح
-const VER = 'ob-v48';
+const VER = 'ob-v49';
 const SHELL = ['./', './index.html', './icon.png', './icon-192.png', './manifest.webmanifest'];
 
 self.addEventListener('install', e => {
@@ -52,7 +52,7 @@ self.addEventListener('push', e => {
   const t = d.title || '', BN = [['🎡','wheel'],['🍳','order'],['🍲','lunch'],['✅','closed'],['⏰','remind'],['💸','money'],['📢','announce'],['📣','announce'],['🗳','poll']];
   const banner = 'nb/' + ((BN.find(([em]) => t.includes(em)) || [,'default'])[1]) + '.jpg';
   e.waitUntil(self.registration.showNotification(d.title || 'فطار المكتب', {
-    body: d.body || '', icon: 'icon-192.png', badge: 'badge.png', image: banner, tag: hash, renotify: true,
+    body: d.body || '', icon: 'icon-192.png', badge: 'badge.png', image: banner, tag: /^#order\//.test(hash) ? hash : hash + ':' + Date.now(), renotify: true,
     data: { hash }, lang: 'ar', dir: 'rtl', vibrate: [120, 60, 120],
     actions: /^#order\//.test(hash) ? [{ action: 'open', title: 'افتح' }, { action: 'skip', title: 'مش النهارده' }] : [],
   }));
