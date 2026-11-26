@@ -87,6 +87,13 @@ service cloud.firestore {
       allow create: if signedIn() && request.resource.data.keys().hasOnly(['text', 'at', 'by']) && rlOk('c', 60000)
                     && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 200
                     && cBoxOk(request.resource.data);
+      // الأدمن يكشف كاتب شكوى معيّنة للكل (rev = الكاتب الحقيقي) أو يخفيه
+      allow update: if isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rev'])
+                    && (!('rev' in request.resource.data) || request.resource.data.rev == get(/databases/$(database)/documents/complaintAuthors/$(cid)).data.uid);
+      // التفاعل: كل واحد يحط/يشيل إيموجي واحد باسمه بس
+      allow update: if signedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['re'])
+                    && request.resource.data.re.diff(resource.data.get('re', {})).affectedKeys().hasOnly([request.auth.uid])
+                    && (!(request.auth.uid in request.resource.data.re) || request.resource.data.re[request.auth.uid] in ['😂','👍','💯','🙄','😡']);
       allow delete: if isAdmin() || (exists(/databases/$(database)/documents/complaintAuthors/$(cid))
                     && get(/databases/$(database)/documents/complaintAuthors/$(cid)).data.uid == request.auth.uid);
     }
