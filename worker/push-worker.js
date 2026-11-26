@@ -53,16 +53,40 @@ async function sendOne(sub, payload, env) {
   return r.status;
 }
 
+// التحقق من اللي باعت: توكن Firebase (تسجيل الدخول) — مفيش حد من برّه يقدر يبعت
+const PROJECTS = ['office-breakfast-c9338', 'fetar-offices'];
+let JWKS = null, JWKS_AT = 0;
+async function verifyToken(tok) {
+  try {
+    const [h, p, sg] = tok.split('.'); const head = JSON.parse(new TextDecoder().decode(unb64u(h))), body = JSON.parse(new TextDecoder().decode(unb64u(p)));
+    const now = Date.now() / 1000;
+    if (!PROJECTS.includes(body.aud) || body.iss !== 'https://securetoken.google.com/' + body.aud || !(body.exp > now) || !(body.iat < now + 300) || !body.sub) return null;
+    if (!JWKS || Date.now() - JWKS_AT > 3600e3) { JWKS = (await (await fetch('https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com')).json()).keys; JWKS_AT = Date.now(); }
+    const jwk = JWKS.find(k => k.kid === head.kid); if (!jwk) return null;
+    const key = await crypto.subtle.importKey('jwk', jwk, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['verify']);
+    return await crypto.subtle.verify('RSASSA-PKCS1-v1_5', key, unb64u(sg), enc.encode(h + '.' + p)) ? body.sub : null;
+  } catch { return null; }
+}
+// حدود الإرسال (لكل نسخة من السيرفر): كل مستخدم 150 مرة في الساعة · كل جهاز يستقبل 60 إشعار في الساعة
+const HITS = new Map();
+function hit(key, max) { const now = Date.now(), a = (HITS.get(key) || []).filter(t => now - t < 3600e3); if (a.length >= max) { HITS.set(key, a); return false; } a.push(now); HITS.set(key, a); if (HITS.size > 5000) HITS.clear(); return true; }
+
 export default {
   async fetch(req, env) {
     const origin = req.headers.get('Origin');
-    const cors = { 'Access-Control-Allow-Origin': okOrigin(origin) ? origin : ALLOWED[0], 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type' };
+    const cors = { 'Access-Control-Allow-Origin': okOrigin(origin) ? origin : ALLOWED[0], 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type, Authorization' };
     if (req.method === 'OPTIONS') return new Response(null, { headers: cors });
     if (req.method === 'GET') return new Response('ok', { headers: cors });
     if (req.method !== 'POST' || !okOrigin(origin)) return new Response('forbidden', { status: 403, headers: cors });
     if (!env.VAPID_PRIVATE || !env.VAPID_PUBLIC) return new Response('missing VAPID keys', { status: 500, headers: cors });
     let data; try { data = await req.json(); } catch { return new Response('bad json', { status: 400, headers: cors }); }
-    const subs = (Array.isArray(data.subs) ? data.subs : []).filter(s => s && /^https:\/\//.test(s.endpoint) && s.keys?.p256dh && s.keys?.auth).slice(0, 60);
+    const tok = (req.headers.get('Authorization') || '').replace(/^Bearer /, '');
+    const uid = tok ? await verifyToken(tok) : null;
+    if (tok && !uid) return new Response(JSON.stringify({ error: 'auth' }), { status: 401, headers: { ...cors, 'Content-Type': 'application/json' } });
+    // من غير توكن (نسخ قديمة من الموقع لسه ماتحدّثتش): مسموح بحد صغير لكل IP لحد ما الكل يحدّث
+    const who = uid ? 'u:' + uid : 'ip:' + (req.headers.get('CF-Connecting-IP') || '?');
+    if (!hit(who, uid ? 150 : 30)) return new Response(JSON.stringify({ error: 'rate', sent: 0, dead: [] }), { status: 429, headers: { ...cors, 'Content-Type': 'application/json' } });
+    const subs = (Array.isArray(data.subs) ? data.subs : []).filter(s => s && /^https:\/\//.test(s.endpoint) && s.keys?.p256dh && s.keys?.auth).slice(0, 60).filter(s => hit('e:' + s.endpoint, 60));
     const payload = JSON.stringify({ title: String(data.title || 'فطار المكتب').slice(0, 80), body: String(data.body || '').slice(0, 240), hash: String(data.hash || '#home').slice(0, 80) });
     const res = await Promise.allSettled(subs.map(s => sendOne(s, payload, env)));
     // الاشتراكات المنتهية (404/410) بترجع علشان الموقع يشيلها
