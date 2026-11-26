@@ -7,7 +7,22 @@ service cloud.firestore {
     function cfg() { return /databases/$(database)/documents/config/app; }
     function isAdmin() { return signedIn() && exists(cfg()) && request.auth.uid in get(cfg()).data.admins; }
     function orderOpen(orderId) { return get(/databases/$(database)/documents/orders/$(orderId)).data.status == 'open'; }
+    // حماية من الضغط: rl/{uid} فيه آخر وقت كتابة لكل نوع — لازم يتحدّث مع الكتابة نفسها، وماينفعش يتكرر أسرع من الحد
+    function rlPath() { return /databases/$(database)/documents/rl/$(request.auth.uid); }
+    function rlOk(k, ms) { return getAfter(rlPath()).data[k] == request.time
+      && (!exists(rlPath()) || !(k in get(rlPath()).data) || get(rlPath()).data[k] < request.time - duration.value(ms, 'ms')); }
+    function validFee(d) { return !('fee' in d) || (d.fee is number && d.fee >= 0 && d.fee <= 500); }
     function validItem(d) { return d.name is string && d.name.size() > 0 && d.qty is number && d.qty > 0 && d.price is number && d.price >= 0; }
+
+    match /rl/{uid} {
+      allow read: if isMe(uid);
+      allow create, update: if isMe(uid) && request.resource.data.keys().hasOnly(['i','t','c','n','o'])
+        && (!('i' in request.resource.data) || request.resource.data.i == request.time || (resource != null && 'i' in resource.data && request.resource.data.i == resource.data.i))
+        && (!('t' in request.resource.data) || request.resource.data.t == request.time || (resource != null && 't' in resource.data && request.resource.data.t == resource.data.t))
+        && (!('c' in request.resource.data) || request.resource.data.c == request.time || (resource != null && 'c' in resource.data && request.resource.data.c == resource.data.c))
+        && (!('n' in request.resource.data) || request.resource.data.n == request.time || (resource != null && 'n' in resource.data && request.resource.data.n == resource.data.n))
+        && (!('o' in request.resource.data) || request.resource.data.o == request.time || (resource != null && 'o' in resource.data && request.resource.data.o == resource.data.o));
+    }
 
     // المستخدمين: كل واحد يعدّل بروفايله بس
     match /users/{uid} {
@@ -36,8 +51,8 @@ service cloud.firestore {
     // الطلبيات: اللي عملها أو اللي بيدفع يديرها · المسح للأدمن بس (التنظيف)
     match /orders/{orderId} {
       allow read: if signedIn();
-      allow create: if signedIn() && request.resource.data.createdBy == request.auth.uid && request.resource.data.status == 'open';
-      allow update: if signedIn() && request.resource.data.createdBy == resource.data.createdBy
+      allow create: if signedIn() && request.resource.data.createdBy == request.auth.uid && request.resource.data.status == 'open' && validFee(request.resource.data) && rlOk('o', 10000);
+      allow update: if signedIn() && request.resource.data.createdBy == resource.data.createdBy && validFee(request.resource.data)
                     && (resource.data.createdBy == request.auth.uid || resource.data.payerUid == request.auth.uid
                         // عجلة الحظ: أي حد يلفها ويسجّل مين هينزل (الحقول دي بس)
                         || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['runnerUid', 'runnerLine', 'runnerAt', 'runnerSpins']));
@@ -45,16 +60,16 @@ service cloud.firestore {
 
       // الأصناف: كل واحد طلبه بس، وطول ما الطلبية مفتوحة
       match /items/{itemId} {
-        allow create: if isMe(request.resource.data.uid) && validItem(request.resource.data) && orderOpen(orderId);
+        allow create: if isMe(request.resource.data.uid) && validItem(request.resource.data) && orderOpen(orderId) && rlOk('i', 500);
         allow update: if isMe(resource.data.uid) && request.resource.data.uid == resource.data.uid
-                      && validItem(request.resource.data) && orderOpen(orderId);
+                      && validItem(request.resource.data) && orderOpen(orderId) && rlOk('i', 500);
         allow delete: if (isMe(resource.data.uid) && orderOpen(orderId)) || isAdmin();
       }
 
       // الملاحظات: أي حد يضيف، صاحبها أو الأدمن يمسح
       match /notes/{noteId} {
         allow read: if signedIn();
-        allow create: if isMe(request.resource.data.uid) && request.resource.data.text is string && request.resource.data.text.size() > 0;
+        allow create: if isMe(request.resource.data.uid) && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 500 && rlOk('n', 5000);
         allow delete: if isMe(resource.data.uid) || isAdmin();
       }
     }
@@ -62,7 +77,7 @@ service cloud.firestore {
     // صندوق الشكاوى: النص للكل من غير اسم · الكاتب في مجموعة منفصلة الأدمن بس يقراها
     match /complaints/{cid} {
       allow read: if signedIn();
-      allow create: if signedIn() && request.resource.data.keys().hasOnly(['text', 'at'])
+      allow create: if signedIn() && request.resource.data.keys().hasOnly(['text', 'at']) && rlOk('c', 60000)
                     && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 200;
       allow delete: if isAdmin() || (exists(/databases/$(database)/documents/complaintAuthors/$(cid))
                     && get(/databases/$(database)/documents/complaintAuthors/$(cid)).data.uid == request.auth.uid);
@@ -83,7 +98,8 @@ service cloud.firestore {
       allow read: if signedIn();
       allow create: if isMe(request.resource.data.fromUid) && request.resource.data.confirmed == false
                     && request.resource.data.amount is number && request.resource.data.amount > 0
-                    && request.resource.data.toUid != request.auth.uid;
+                    && request.resource.data.toUid != request.auth.uid && rlOk('t', 10000)
+                    && (!('jar' in request.resource.data) || (request.resource.data.jar is number && request.resource.data.jar >= 0 && request.resource.data.jar <= 10));
       // المستلم: يأكد «وصلني» أو يقول «موصلش» (بيفضل ظاهر للكل) · المحوّل: «والله حوّلت» يرجّعه للتأكيد
       allow update: if resource.data.confirmed == false && (
                       (isMe(resource.data.toUid)
