@@ -75,10 +75,18 @@ service cloud.firestore {
     }
 
     // صندوق الشكاوى: النص للكل من غير اسم · الكاتب في مجموعة منفصلة الأدمن بس يقراها
+    // إعدادات الصندوق: مقفول · ممنوع · باسمه (لازم by = نفسه)
+    function cBoxOk(d) {
+      let c = get(cfg()).data;
+      return c.get('cOpen', true) != false && !(request.auth.uid in c.get('cBan', []))
+        && (!('by' in d) || d.by == request.auth.uid)
+        && (!(request.auth.uid in c.get('cNamed', [])) || d.get('by', '') == request.auth.uid);
+    }
     match /complaints/{cid} {
       allow read: if signedIn();
-      allow create: if signedIn() && request.resource.data.keys().hasOnly(['text', 'at']) && rlOk('c', 60000)
-                    && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 200;
+      allow create: if signedIn() && request.resource.data.keys().hasOnly(['text', 'at', 'by']) && rlOk('c', 60000)
+                    && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 200
+                    && cBoxOk(request.resource.data);
       allow delete: if isAdmin() || (exists(/databases/$(database)/documents/complaintAuthors/$(cid))
                     && get(/databases/$(database)/documents/complaintAuthors/$(cid)).data.uid == request.auth.uid);
     }
