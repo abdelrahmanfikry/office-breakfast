@@ -2,7 +2,14 @@ rules_version = '2';
 // قواعد الأمان: الكل يشوف كل حاجة، وكل واحد يعدّل حاجته بس.
 service cloud.firestore {
   match /databases/{database}/documents {
-    function signedIn() { return request.auth != null; }
+    function authd() { return request.auth != null; }
+    function uDoc() { return /databases/$(database)/documents/users/$(request.auth.uid); }
+    // موافقة الأدمن (لو مفعّلة): اللي لسه ماتوافقش عليه مايقراش ولا يكتب أي حاجة
+    function okUser() { return !exists(/databases/$(database)/documents/config/app)
+      || get(/databases/$(database)/documents/config/app).data.get('approval', false) != true
+      || request.auth.uid in get(/databases/$(database)/documents/config/app).data.get('admins', [])
+      || (exists(uDoc()) && get(uDoc()).data.get('approved', false) == true); }
+    function signedIn() { return authd() && okUser(); }
     function isMe(uid) { return signedIn() && request.auth.uid == uid; }
     function cfg() { return /databases/$(database)/documents/config/app; }
     function isAdmin() { return signedIn() && exists(cfg()) && request.auth.uid in get(cfg()).data.admins; }
@@ -26,20 +33,25 @@ service cloud.firestore {
 
     // المستخدمين: كل واحد يعدّل بروفايله بس
     match /users/{uid} {
-      allow read: if signedIn();
-      allow create, update: if isMe(uid);
+      allow read: if authd() && (request.auth.uid == uid || signedIn());
+      allow create: if authd() && request.auth.uid == uid && !('approved' in request.resource.data) && !('rejected' in request.resource.data);
+      allow update: if (authd() && request.auth.uid == uid
+                        && request.resource.data.get('approved', null) == resource.data.get('approved', null)
+                        && request.resource.data.get('rejected', null) == resource.data.get('rejected', null))
+                    || (isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['approved', 'rejected', 'push']));
     }
 
     // الإعدادات: أول واحد بيعمل نفسه أدمن، وبعدها الأدمن بس يعدّل
     match /config/app {
-      allow read: if signedIn();
-      allow create: if signedIn() && request.resource.data.admins == [request.auth.uid];
+      allow read: if authd();
+      allow create: if authd() && request.resource.data.admins == [request.auth.uid];
       allow update: if isAdmin();
     }
 
-    // الأصناف الثابتة: مشتركة، أي حد يعدّلها
+    // الأصناف الثابتة: الكل يشوفها · الأدمن بس يعدّل
     match /config/catalog {
-      allow read, write: if signedIn();
+      allow read: if signedIn();
+      allow write: if isAdmin();
     }
 
     // الأرصدة المرحّلة بعد التنظيف — الأدمن بس
@@ -126,10 +138,12 @@ service cloud.firestore {
       allow delete: if ((isMe(resource.data.fromUid) || isMe(resource.data.toUid)) && resource.data.confirmed == false) || isAdmin();
     }
 
-    // المنيوهات: مشتركة للكل · المسح لصاحبها
+    // المنيوهات: الكل يشوف ويضيف مطعم · التعديل والمسح لصاحبه أو الأدمن
     match /restaurants/{rid} {
-      allow read, create, update: if signedIn();
-      allow delete: if isMe(resource.data.createdBy) || isAdmin();
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.createdBy == request.auth.uid;
+      allow update: if (isMe(resource.data.get('createdBy', '')) && request.resource.data.createdBy == resource.data.createdBy) || isAdmin();
+      allow delete: if isMe(resource.data.get('createdBy', '')) || isAdmin();
     }
   }
 }
