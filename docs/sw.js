@@ -1,6 +1,6 @@
 // فطار المكتب — Service Worker: يخلّي الموقع يتسطّب ويفتح من غير نت
 // زوّد رقم النسخة مع أي تعديل في الملفات علشان الكاش القديم يتمسح
-const VER = 'ob-v47';
+const VER = 'ob-v48';
 const SHELL = ['./', './index.html', './icon.png', './icon-192.png', './manifest.webmanifest'];
 
 self.addEventListener('install', e => {
