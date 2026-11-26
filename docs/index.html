@@ -60,11 +60,11 @@ html,body{overflow-x:clip}.row .btn{max-width:100%;white-space:normal;text-align
 .btn:hover{border-color:var(--pri)}
 .btn.pri{background:var(--pri);border-color:var(--pri);color:#fff}
 @media (prefers-color-scheme:dark){.btn.pri{color:#06201d}}
-body.ramadan{--bg:#0b1530;--card:#13224a;--ink:#f6efd9;--mut:#aab3cc;--line:#26386a;--pri:#f4b942;--pri2:#2b2a4d;--ok:#5ee39a;--okbg:#123a2e;--bad:#ff8a80;--badbg:#3d1d2c;--warn:#ffd166;--warnbg:#3a3020;--sh:0 4px 18px rgba(0,0,0,.35)}
-body.ramadan .btn.pri{color:#1a1203}
-body.ramadan header.top{background:linear-gradient(90deg,#0b1530,#1d2b63)}
-body.ramadan header.top .in{position:relative}
-body.ramadan header.top .in::after{content:'🏮   🌙   🏮';position:absolute;top:100%;inset-inline-start:50%;transform:translateX(50%);font-size:18px;letter-spacing:2px;pointer-events:none;opacity:.9}
+html.ramadan{--bg:#0b1530;--card:#13224a;--ink:#f6efd9;--mut:#aab3cc;--line:#26386a;--pri:#f4b942;--pri2:#2b2a4d;--ok:#5ee39a;--okbg:#123a2e;--bad:#ff8a80;--badbg:#3d1d2c;--warn:#ffd166;--warnbg:#3a3020;--sh:0 4px 18px rgba(0,0,0,.35)}
+html.ramadan .btn.pri{color:#1a1203}
+html.ramadan header.top{background:linear-gradient(90deg,#0b1530,#1d2b63)}
+html.ramadan header.top .in{position:relative}
+html.ramadan header.top .in::after{content:'🏮   🌙   🏮';position:absolute;top:100%;inset-inline-start:50%;transform:translateX(50%);font-size:18px;letter-spacing:2px;pointer-events:none;opacity:.9}
 .rmd{margin-top:10px;text-align:center;padding:14px;border-radius:var(--r);background:linear-gradient(135deg,#1d2b63,#3b2a6b);color:#f6efd9;font-weight:700;border:1px solid #f4b94255}
 .cmp{padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}.cmp:last-child{border:0}
 .btn.dan{color:var(--bad)}
@@ -207,6 +207,15 @@ function errMsg(e){
 }
 async function copy(text){ try{ await navigator.clipboard.writeText(text); toast('اتنسخ'); }catch{ toast('النسخ مش متاح'); } }
 
+/* ---------- حماية من الضغط: كل كتابة مهمة بتتسجل معاها «آخر مرة» والقواعد بتمنع التكرار السريع ---------- */
+// i=أصناف (نص ثانية) · t=تحويلات (10ث) · c=شكاوى (دقيقة) · n=ملاحظات (5ث) · o=طلبيات (10ث)
+async function wr(k, fn){
+  const b = writeBatch(db), out = fn(b); b.set(doc(db,'rl',me()), { [k]: serverTimestamp() }, { merge:true });
+  try { await b.commit(); return out; }
+  catch (e) { if (e?.code === 'permission-denied') { toast('بالراحة شوية 😅 استنى ثانية وجرّب تاني'); const er = new Error('بالراحة شوية — استنى ثانية وجرّب تاني'); er.rl = true; throw er; } throw e; }
+}
+const addW = (k, col, data) => wr(k, b => { const ref = doc(col); b.set(ref, data); return ref; });
+const updW = (k, ref, data) => wr(k, b => b.update(ref, data));
 /* ---------- الحسابات ---------- */
 function orderCalc(o){
   const its = (S.items[o.id] || []).slice().sort((a,b)=>tsOf(a.createdAt)-tsOf(b.createdAt));
@@ -216,7 +225,7 @@ function orderCalc(o){
     p.items.push(it); p.sub += (+it.qty||0) * (+it.price||0);
   }
   const parts = Object.values(per);
-  const fee = +o.fee || 0, share = parts.length ? fee / parts.length : 0;
+  const fee = Math.min(500, Math.max(0, +o.fee || 0)), share = parts.length ? fee / parts.length : 0;
   parts.forEach(p => p.total = p.sub + share);
   const subtotal = parts.reduce((a,p)=>a+p.sub,0);
   return { its, parts, fee, share, subtotal, total: subtotal + fee };
@@ -232,20 +241,25 @@ function ledger(){
   };
   for (const o of S.orders){
     if (o.status !== 'closed' || !o.payerUid) continue;
-    for (const p of orderCalc(o).parts) add(o.payerUid, p.uid, p.total);
+    for (const p of orderCalc(o).parts) add(o.payerUid, p.uid, Math.max(0, p.total));
   }
   for (const t of S.transfers) if (t.confirmed) trAdd(add, t);
   for (const c of (S.cash || [])) add(c.fromUid, c.toUid, +c.amount || 0); // دفع كاش سجّله الأدمن
   // كارت العفو: اللي استخدمه عليه الغرامة لأمين صندوق الفطار
-  for (const u of Object.values(S.users || {})) for (const p of (u.pardons || [])) if (p.at > (S.resetAt || 0) && +p.fee > 0) add(p.to, u.id, +p.fee);
-  for (const p of (S.jarPay || [])) for (const [holder, amt] of Object.entries(p.holders || {})) add(p.winner, holder, +amt || 0); // الحصالة: اللي معاه الفكة عليه للكسبان
+  for (const u of Object.values(S.users || {})) for (const p of (u.pardons || [])) if (p.at > (S.resetAt || 0) && +p.fee > 0) add(p.to, u.id, Math.min(100, +p.fee));
+  for (const p of (S.jarPay || [])){
+    if (p.oid){ // الحصالة دفعت طلبية: اللي معاه الفكة يدّيها للي دفع الطلبية، واللي اتغطّى نصيبه مايدفعش الجزء ده
+      for (const [holder, amt] of Object.entries(p.holders || {})) add(p.payer, holder, +amt || 0);
+      for (const [u, amt] of Object.entries(p.covered || {})) add(u, p.payer, +amt || 0);
+    } else for (const [holder, amt] of Object.entries(p.holders || {})) add(p.winner, holder, +amt || 0); // الحصالة: اللي معاه الفكة عليه للكسبان
+  }
   // الأرصدة المرحّلة من البيانات القديمة اللي اتمسحت
   for (const [k, v] of Object.entries(S.carry)){ const [a, b] = k.split('_'); if (v > 0) add(a, b, v); else if (v < 0) add(b, a, -v); }
   return { net, pair };
 }
 // تحويل عادي: from سدّد لـ to · تحويل «على حساب» شخص: from سدّد دينه لـ ob، والفلوس بقت على to لـ ob
 function trAdd(add, t){
-  const a = +t.amount || 0;
+  const a = Math.max(0, +t.amount || 0);
   if (t.onBehalf && t.onBehalf !== t.fromUid && t.onBehalf !== t.toUid){ add(t.fromUid, t.onBehalf, a); add(t.onBehalf, t.toUid, a); }
   else add(t.fromUid, t.toUid, a);
 }
@@ -275,7 +289,7 @@ const carryKey = (cr, dr) => cr < dr ? [`${cr}_${dr}`, 1] : [`${dr}_${cr}`, -1];
 function contribution(orders, transfers){
   const out = {};
   const add = (cr, dr, amt) => { if (!cr || !dr || cr===dr || !amt) return; const [k, s] = carryKey(cr, dr); out[k] = (out[k]||0) + s*amt; };
-  for (const o of orders){ if (o.status !== 'closed' || !o.payerUid) continue; for (const p of orderCalc(o).parts) add(o.payerUid, p.uid, p.total); }
+  for (const o of orders){ if (o.status !== 'closed' || !o.payerUid) continue; for (const p of orderCalc(o).parts) add(o.payerUid, p.uid, Math.max(0, p.total)); }
   for (const t of transfers) if (t.confirmed) trAdd(add, t);
   return out;
 }
@@ -285,7 +299,7 @@ function startListeners(){
   const L = (name, ref, fn) => S.unsubs.push(onSnapshot(ref, snap => { if (S.loaded[name]) try { notifyFrom(name, snap); } catch (e) { console.warn(e); } fn(snap); S.loaded[name]=true; render(); }, e => toast(errMsg(e))));
   L('users', collection(db,'users'), snap => {
     S.users = {}; snap.forEach(d => S.users[d.id] = { id:d.id, ...d.data() });
-    if (notifOn() && !myPushKey && !S._pushTried){ S._pushTried = true; pushSubscribe(); }
+    if ((notifOn() || !PUSH_HOST) && !myPushKey && !S._pushTried){ S._pushTried = true; pushSubscribe(); }
     if (!S._skipChecked){ S._skipChecked = true; setTimeout(handleSkip, 0); }
     if (!S.users[me()]) setDoc(doc(db,'users',me()), { name: S.me.displayName || S.me.email.split('@')[0], email:S.me.email, payInfo:'', createdAt:serverTimestamp() }).catch(()=>{});
   });
@@ -307,6 +321,7 @@ function startListeners(){
     const an = d.exists() ? (d.data().announce || null) : null, prev = S.announce;
     if (S.loaded.config && an?.text && an.at !== prev?.at && an.by !== me()) notify('إعلان من الأدمن', an.text, '#home');
     S.announce = an;
+    S.inbox = d.exists() ? (d.data().inbox || []) : [];
     const pl = d.exists() ? (d.data().poll || null) : null;
     if (S.loaded.config && pl?.id && pl.id !== S.poll?.id && pl.by !== me()) notify('تصويت جديد', pl.q, '#home');
     S.poll = pl;
@@ -358,9 +373,19 @@ function doRender(){
   const [route, arg] = (location.hash.slice(1) || 'home').split('/');
   watchNotes(route === 'order' ? arg : null);
   const V = { home:vHome, order:()=>vOrder(arg), history:vHistory, money:vMoney, transfers:vTransfers, menus:vMenus, profile:vProfile, report:vReport, lunch:vLunch };
-  document.body.classList.toggle('ramadan', !!S.ramadan);
+  document.documentElement.classList.toggle('ramadan', !!S.ramadan);
   app.innerHTML = shell(route, (V[route] || vHome)());
   if (aid){ const el = document.getElementById(aid); if (el){ el.focus(); try{ el.setSelectionRange(s1,s2); }catch{} } }
+}
+// رسايل الأدمن: بتتحفظ جوه الموقع وتظهر للي اتبعتتله أول ما يفتح — حتى لو الإشعارات مقفولة أو ماوصلتش
+function myInbox(){
+  let seen = []; try { seen = JSON.parse(LS.get('ob_inbox_seen') || '[]'); } catch {}
+  const week = Date.now() - 7 * 864e5;
+  return (S.inbox || []).filter(m => m.at > week && m.by !== me() && (!m.to || m.to.includes(me())) && !seen.includes(m.id));
+}
+function vInbox(){
+  return myInbox().map(m => `<div class="ann"><span class="ann-i">📣</span><div class="ann-t"><b>${esc(m.title)}</b><br>${esc(m.body)}<small>${esc(uname(m.by))} · ${new Date(m.at).toLocaleString('ar-EG',{weekday:'short',hour:'numeric',minute:'2-digit'})}</small></div>
+    <button class="ann-x" data-act="inboxSeen" data-id="${m.id}" aria-label="قفل">✕</button></div>`).join('');
 }
 // إعلان الأدمن: يظهر للكل فوق كل الصفحات، وكل واحد يقدر يقفله عنده
 function vAnnounce(){
@@ -416,7 +441,7 @@ function shell(route, body){
   const pend = S.transfers.filter(t => t.toUid===me() && !t.confirmed && !t.rejected).length;
   const tab = (r, label, extra='') => `<a href="#${r}" class="${route===r || (r==='home'&&route==='order')?'on':''}">${label}${extra}</a>`;
   return `<header class="top"><div class="in"><a href="#home" class="brand"><img src="icon.png" alt="">${S.ramadan ? 'فطار المكتب 🌙' : 'فطار المكتب'}</a><span class="sp"></span><a href="#profile" class="who">${esc(uname(me()))}</a></div></header>
-  <main class="wrap">${vAnnounce()}${vPoll()}${body}</main>
+  <main class="wrap">${vInbox()}${vAnnounce()}${vPoll()}${body}</main>
   <nav class="tabs">${tab('home','الرئيسية')}${tab('history','الطلبيات')}${tab('money','الحساب')}${tab('transfers','التحويلات', pend?` <span class="badge">${pend}</span>`:'')}${canLunch() ? tab('lunch','الغدا') : ''}${tab('menus','المنيوهات')}${tab('profile','حسابي')}</nav>`;
 }
 
@@ -473,15 +498,37 @@ function orderCard(o){
 // آخر الشهر الأدمن يلف، والكسبان ياخد الحصالة كلها: كل اللي معاه فكة يبقى عليه للكسبان.
 const lastPayAt = () => Math.max(0, ...(S.jarPay || []).map(p => p.at || 0));
 function jarNow(){
-  const since = lastPayAt(), holders = {}; let total = 0, n = 0;
-  for (const t of S.transfers) if (t.confirmed && +t.jar > 0 && tsOf(t.createdAt) > since){ holders[t.toUid] = r2((holders[t.toUid]||0) + +t.jar); total += +t.jar; n++; }
-  return { total:r2(total), n, holders };
+  const since = lastPayAt(), holders = {}, list = []; let total = 0, n = 0;
+  const lastP = (S.jarPay || []).reduce((a, p) => (!a || (p.at||0) > (a.at||0)) ? p : a, null);
+  for (const [h, a] of Object.entries(lastP?.left || {})) if (+a > 0){ holders[h] = r2((holders[h]||0) + +a); total += +a; }
+  const leftTotal = r2(total);
+  for (const t of S.transfers){ const jv = Math.min(10, +t.jar || 0, +t.amount || 0); if (t.confirmed && jv > 0 && tsOf(t.createdAt) > since){ holders[t.toUid] = r2((holders[t.toUid]||0) + jv); total += jv; n++; list.push(t); } }
+  return { total:r2(total), n, holders, list, leftTotal };
+}
+// الحصالة تدفع طلبية: بتغطّي أنصبة الناس بترتيب الطلب — أول واحد طلب يتغطّى الأول، واللي طلبه عدّى الحصالة يدفع الزيادة
+function jarOrderBox(o, c){
+  const p = (S.jarPay || []).find(x => x.oid === o.id);
+  if (p){ const cov = Object.entries(p.covered || {}), pay = c.parts.filter(x => r2(x.total - (+p.covered?.[x.uid] || 0)) > EPS && x.uid !== o.payerUid);
+    return `<div class="runner" style="margin-top:8px">🐷 الحصالة دفعت <b>${money(p.total)}</b> من الطلبية دي
+      <div style="font-size:13px;font-weight:400;margin-top:4px">اتغطّى: ${cov.map(([u,a]) => `${esc(uname(u))} (${money(a)})`).join('، ') || '—'}</div>
+      ${pay.length ? `<div style="font-size:13px;font-weight:400">بيدفع الزيادة: ${pay.map(x => `${esc(uname(x.uid))} (${money(r2(x.total - (+p.covered?.[x.uid] || 0)))})`).join('، ')}</div>` : ''}
+      ${isAdmin() ? `<a href="#" data-act="jarUndo" data-id="${o.id}" class="bad" style="font-size:12px">رجّع فلوس الحصالة</a>` : ''}</div>`; }
+  const j = jarNow();
+  return isAdmin() && o.status === 'closed' && o.payerUid && j.total > 0 ? `<div class="row" style="margin-top:8px"><button class="btn" data-act="jarPayOrder" data-id="${o.id}">🐷 الحصالة تدفع الطلبية دي (${money(Math.min(j.total, c.total))})</button></div>` : '';
 }
 function vJar(){
   const j = jarNow(), last = (S.jarPay || []).slice(-1)[0];
   if (!j.n && !last) return '';
   return `<div class="card jar"><div class="between"><div><b>🐷 حصالة الفكة</b><div class="mut" style="font-size:12px">${j.n ? `${j.n} مساهمة لحد دلوقتي` : 'فاضية — قرّب لفوق وانت بتحوّل'}${last ? ` · آخر كسبان: ${esc(uname(last.winner))} (${money(last.total)})` : ''}</div></div>
     <b style="font-size:20px">${money(j.total)}</b></div>
+    ${j.n || last ? `<a href="#" data-act="jarInfo" class="mut" style="font-size:12px">${S.jarOpen ? 'اخفي التفاصيل' : 'الفلوس جت منين وفين؟'}</a>` : ''}
+    ${S.jarOpen ? `<div style="font-size:13px;margin-top:6px">
+      ${j.leftTotal > 0 ? `<div class="mut">فاضل من المرة اللي فاتت: ${money(j.leftTotal)}</div>` : ''}
+      ${j.n || j.leftTotal ? `<b>جت منين:</b>${j.list.map(t => `<div class="between" style="padding:3px 0;border-bottom:1px solid var(--line)"><span>${esc(uname(t.fromUid))} حوّل لـ ${esc(uname(t.toUid))} ${money(t.amount)} وقرّب لفوق</span><b>+${money(t.jar)}</b></div>`).join('')}
+      <div style="margin-top:6px"><b>الفلوس مع مين دلوقتي:</b> ${Object.entries(j.holders).map(([u,a]) => `${esc(uname(u))} (${money(a)})`).join('، ')}</div>
+      <div class="mut" style="font-size:12px">الفكة بتفضل مع اللي استلم التحويل لحد اللفة — ساعتها بتتحسب عليه للكسبان.</div>` : ''}
+      ${(S.jarPay || []).length ? `<div style="margin-top:6px"><b>لفّات قبل كده:</b>${(S.jarPay || []).slice().reverse().map(p => `<div class="mut">${new Date(p.at).toLocaleDateString('ar-EG',{day:'numeric',month:'short'})}: ${p.oid ? `دفعت طلبية «${esc(S.orders.find(o => o.id === p.oid)?.title || 'طلبية')}»` : `كسبها ${esc(uname(p.winner))}`} — ${money(p.total)}</div>`).join('')}</div>` : ''}
+    </div>` : ''}
     ${isAdmin() && j.total > 0 ? '<div class="row" style="margin-top:8px"><button class="btn sm pri" data-act="jarSpin">🎰 لِف على الحصالة</button></div>' : ''}</div>`;
 }
 function allComplaints(){ return (S.complaints || []).slice().sort((a,b) => (b.at||0) - (a.at||0)); }
@@ -570,6 +617,7 @@ function vOrder(id){
     <div class="between" style="margin-top:10px;border-top:1px solid var(--line);padding-top:10px">
       <span class="mut">الأصناف ${money(c.subtotal)}${c.fee?` + توصيل/خدمة ${money(c.fee)}`:''}</span><b style="font-size:18px">${money(c.total)}</b></div>
     ${bigBillBox(o, c.total)}
+    ${jarOrderBox(o, c)}
     ${mine ? `<div class="mut" style="margin-top:4px">طلبك: <b class="${o.payerUid===me()?'':'bad'}">${money(mine.total)}</b></div>`:''}
     ${manage ? `<div class="row" style="margin-top:12px">
       ${open ? `<button class="btn" data-act="remindOrder" data-id="${o.id}">🔔 فكّر اللي ماطلبش</button>` : ''}
@@ -1024,13 +1072,13 @@ const A = {
   },
 
   newOrder: day => modal(day===yesterdayStr() ? 'طلبية امبارح' : 'طلبية جديدة', orderForm({ day: day || todayStr() }), async f => {
-    const data = readOrderForm(f), ref = await addDoc(collection(db,'orders'), { ...data, status:'open', createdBy:me(), createdAt:serverTimestamp() });
+    const data = readOrderForm(f), ref = await addW('o', collection(db,'orders'), { ...data, status:'open', createdBy:me(), createdAt:serverTimestamp() });
     pushSend('طلبية جديدة اتفتحت 🍳', `${uname(me())} فتح «${data.title || 'طلبية'}»${data.restaurantName ? ' من ' + data.restaurantName : ''} — الحق اطلب`, '#order/' + ref.id, null, 'order');
     location.hash = 'order/' + ref.id;
   }, 'افتح الطلبية'),
   cloneOrder: id => { const o = S.orders.find(x=>x.id===id);
     modal('طلبية زي دي', orderForm({ ...o, day:todayStr(), note:'' }), async f => {
-      const data = readOrderForm(f), ref = await addDoc(collection(db,'orders'), { ...data, status:'open', createdBy:me(), createdAt:serverTimestamp() });
+      const data = readOrderForm(f), ref = await addW('o', collection(db,'orders'), { ...data, status:'open', createdBy:me(), createdAt:serverTimestamp() });
     pushSend('طلبية جديدة اتفتحت 🍳', `${uname(me())} فتح «${data.title || 'طلبية'}»${data.restaurantName ? ' من ' + data.restaurantName : ''} — الحق اطلب`, '#order/' + ref.id, null, 'order');
       location.hash = 'order/' + ref.id;
     }, 'افتح الطلبية'); },
@@ -1038,10 +1086,10 @@ const A = {
     const [iid, d] = x.split('|'), it = (S.items[oid]||[]).find(i=>i.id===iid); if (!it) return;
     const q = r2((+it.qty||0) + (+d));
     if (q <= 0){ if (confirm('تحذف الصنف ده؟')) await deleteDoc(doc(db,'orders',oid,'items',iid)); return; }
-    await updateDoc(doc(db,'orders',oid,'items',iid), { qty:q });
+    await updW('i', doc(db,'orders',oid,'items',iid), { qty:q }).catch(() => {});
   },
   addNote: oid => modal('ملاحظة على الطلبية', '<label>الملاحظة<textarea name="text" rows="3" required></textarea></label>',
-    f => addDoc(collection(db,'orders',oid,'notes'), { uid:me(), text:f.get('text').trim(), createdAt:serverTimestamp() }), 'أضف'),
+    f => addW('n', collection(db,'orders',oid,'notes'), { uid:me(), text:f.get('text').trim(), createdAt:serverTimestamp() }), 'أضف'),
   delNote: async (oid, nid) => { if (confirm('تحذف الملاحظة؟')) await deleteDoc(doc(db,'orders',oid,'notes',nid)); },
   claimAdmin: () => setDoc(doc(db,'config','app'), { admins:[me()] }),
   delAdmin: () => modal('شيل أدمن', `<label>الأدمن<select name="u">${S.admins.filter(u => u !== me()).map(u => `<option value="${u}">${esc(uname(u))}</option>`).join('')}</select></label>`,
@@ -1083,9 +1131,8 @@ const A = {
   girlsJoke: (_, x) => setDoc(doc(db,'config','app'), { girlsJoke: x === '1' }, { merge:true }).then(() => toast(x === '1' ? 'الهزار اشتغل 🎀' : 'الهزار اتقفل')),
   ramadan: (_, x) => setDoc(doc(db,'config','app'), { ramadan: x === '1' }, { merge:true }).then(() => toast(x === '1' ? 'رمضان كريم 🌙' : 'وضع رمضان اتقفل')),
   cNew: () => modal('شكوى مجهولة 🤐', `<p class="mut" style="margin-top:0;font-size:13px">اسمك مش هيظهر لحد غير الأدمن.</p><label>الشكوى<textarea name="t" maxlength="200" rows="3" required placeholder="مثلًا: الفول النهارده كان بارد زي قلب اللي نزل"></textarea></label>`,
-      f => { const t = f.get('t').trim().slice(0, 200); if (!t) return; const ref = doc(collection(db,'complaints')), b = writeBatch(db);
-        b.set(doc(db,'complaintAuthors',ref.id), { uid: me() }); b.set(ref, { text: t, at: Date.now() });
-        return b.commit().then(() => toast('الشكوى اتحطت في الصندوق 📮')).catch(e => toast(errMsg(e))); }, 'ابعت'),
+      f => { const t = f.get('t').trim().slice(0, 200); if (!t) return; const ref = doc(collection(db,'complaints'));
+        return wr('c', b => { b.set(doc(db,'complaintAuthors',ref.id), { uid: me() }); b.set(ref, { text: t, at: Date.now() }); }).then(() => toast('الشكوى اتحطت في الصندوق 📮')).catch(e => toast(errMsg(e))); }, 'ابعت'),
   cDel: id => { if (!confirm('تمسح الشكوى دي؟')) return; const b = writeBatch(db); b.delete(doc(db,'complaints',id)); b.delete(doc(db,'complaintAuthors',id)); return b.commit().catch(e => toast(errMsg(e))); },
   cAll: () => { S.cAll = !S.cAll; render(); },
   pardonSet: () => modal('كارت العفو', `<label>الغرامة (ج.م) — صفر يبقى ببلاش<input name="fee" type="number" min="0" step="0.5" inputmode="decimal" value="${+S.pardonFee || 0}" required></label>
@@ -1118,7 +1165,7 @@ const A = {
     return setDoc(doc(db,'users',me()), { lunch:{ [day]: cur === val ? null : val } }, { merge:true }); },
   lunchOrder: day => { const p = (S.lunch || {})[day] || {};
     return modal('طلبية الغدا', orderForm({ day, title:'غدا', restaurantId:p.rid || '', restaurantName:p.rid ? '' : (p.name || '') }), async f => {
-      const data = readOrderForm(f), ref = await addDoc(collection(db,'orders'), { ...data, lunch:true, status:'open', createdBy:me(), createdAt:serverTimestamp() });
+      const data = readOrderForm(f), ref = await addW('o', collection(db,'orders'), { ...data, lunch:true, status:'open', createdBy:me(), createdAt:serverTimestamp() });
       pushSend('طلبية الغدا اتفتحت 🍲', `${data.restaurantName || 'الغدا'} — الحق اطلب`, '#order/' + ref.id, [...new Set([...(S.lunchMembers||[]), ...(S.admins||[])])], 'lunch');
       location.hash = 'order/' + ref.id; }, 'افتح الطلبية'); },
   myPush: async (k, x) => { await setDoc(doc(db,'users',me()), { pushOff:{ [k]: x === '1' } }, { merge:true }); toast(x === '1' ? 'اتقفل عندك ✕' : 'اتشغّل عندك ✓'); },
@@ -1131,13 +1178,18 @@ const A = {
       <label>الرسالة<textarea name="body" rows="3" required maxlength="200" placeholder="اكتب اللي عاوزه…"></textarea></label>
       <div class="mut" style="font-size:12px;margin:-4px 0 6px">أو اختار جاهزة 😄</div>
       <div class="row" style="flex-wrap:wrap;gap:6px;margin-bottom:10px">${fun.map(t => `<button type="button" class="btn sm" onclick="this.form.body.value=this.textContent">${esc(t)}</button>`).join('')}</div>
-      <label>لمين؟<select name="to"><option value="all">الكل</option>${S.lunchMembers?.length ? '<option value="lunch">أعضاء الغدا</option>' : ''}${Object.values(S.users).filter(u => u.id !== me()).sort((a,b)=>(a.name||'').localeCompare(b.name||'','ar')).map(u => `<option value="${u.id}">${esc(u.name)} بس${Object.values(u.push||{}).some(v => v?.endpoint) ? ' 🔔' : ' (مش مشترك)'}</option>`).join('')}</select></label>
-      <div class="mut" style="font-size:12px;margin-top:-4px">🔔 = مشترك في الإشعارات. اللي مش مشترك مش هيوصله غير لو فتح الموقع.</div>
-      <label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" name="ann" value="1" style="width:auto"> كمان يتثبت كإعلان فوق الموقع</label>`,
-      f => { const title = f.get('title').trim() || '📣 من الإدارة', body = f.get('body').trim(), to = f.get('to');
-        const uids = to === 'all' ? null : to === 'lunch' ? [...new Set([...(S.lunchMembers||[]), ...(S.admins||[])])] : [to];
+      <div style="margin:4px 0 6px"><b style="font-size:14px">لمين؟</b> <span class="mut" style="font-size:12px">(علّم اللي يوصلهم — شيل العلامة من اللي مش عاوزه)</span></div>
+      <div class="row" style="gap:6px;margin-bottom:6px"><button type="button" class="btn sm" onclick="this.form.querySelectorAll('input[name=u]').forEach(c=>c.checked=true)">الكل</button><button type="button" class="btn sm" onclick="this.form.querySelectorAll('input[name=u]').forEach(c=>c.checked=false)">ولا حد</button>${S.lunchMembers?.length ? `<button type="button" class="btn sm" onclick="const L=${esc(JSON.stringify([...new Set([...(S.lunchMembers||[]), ...(S.admins||[])])]))};this.form.querySelectorAll('input[name=u]').forEach(c=>c.checked=L.includes(c.value))">أعضاء الغدا</button>` : ''}</div>
+      <div class="chips" style="margin:0 0 6px;max-height:200px;overflow:auto">${Object.values(S.users).filter(u => u.id !== me()).sort((a,b)=>(a.name||'').localeCompare(b.name||'','ar')).map(u => `<label class="chip" style="flex-direction:row;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" name="u" value="${u.id}" checked style="width:auto;margin:0"> ${esc(u.name)}${Object.values(u.push||{}).some(v => v?.endpoint) ? ' 🔔' : ''}</label>`).join('')}</div>
+      <div class="mut" style="font-size:12px;margin-top:-4px">🔔 = مشترك في الإشعارات. الرسالة كمان بتتحفظ في الموقع وتظهر للي اخترتهم أول ما يفتحوا (لمدة أسبوع).</div>
+      <label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" name="ann" value="1" style="width:auto"> كمان يتثبت كإعلان فوق الموقع <span class="mut">(الإعلان بيظهر للكل)</span></label>`,
+      f => { const title = f.get('title').trim() || '📣 من الإدارة', body = f.get('body').trim(), picked = f.getAll('u');
+        if (!picked.length) throw new Error('اختار حد على الأقل');
+        const others = Object.keys(S.users).filter(u => u !== me()), uids = picked.length >= others.length ? null : picked;
         const target = uids || Object.keys(S.users), subd = target.filter(u => Object.values(S.users[u]?.push||{}).some(v => v?.endpoint) && !S.users[u]?.pushOff?.admin);
-        pushSend(title, body, '#home', uids, 'admin').then(r => toast(r?.off ? '⚠️ «إشعارات الأدمن» مقفولة للكل — شغّلها من جدول الإشعارات' : r?.none ? 'محدش من اللي اخترتهم مشترك في الإشعارات — ابعت إعلان بدلها' : r?.error ? '⚠️ ماتبعتش: ' + r.error : `📣 وصل لـ ${r.sent} جهاز${r.dead?.length ? ` (و${r.dead.length} اشتراك قديم بايظ)` : ''}`));
+        const msg = { id: Math.random().toString(36).slice(2, 10), title, body, to: uids, by: me(), at: Date.now() };
+        updateDoc(doc(db,'config','app'), { inbox: [...(S.inbox || []).filter(m => m.at > Date.now() - 7 * 864e5), msg].slice(-15) }).catch(e => toast(errMsg(e)));
+        pushSend(title, body, '#home', uids, 'admin').then(r => toast(r?.off ? '✅ اتحفظت في الموقع — هتظهر لهم أول ما يفتحوا (إشعارات الأدمن مقفولة)' : r?.none ? '✅ اتحفظت في الموقع — هتظهر لهم أول ما يفتحوا' : r?.error ? '✅ اتحفظت في الموقع · ⚠️ الإشعار ماتبعتش: ' + r.error : `📣 وصل لـ ${r.sent} جهاز + اتحفظت في الموقع`));
         if (f.get('ann')) return updateDoc(doc(db,'config','app'), { announce:{ text:body, by:me(), at:Date.now() } }); }, 'ابعت'); },
   // ملخص الشهر: إشعار شخصي لكل واحد — صرف كام، كام طلبية، أكتر صنف، ولقب على الماشي
   pushSummary: () => {
@@ -1164,6 +1216,7 @@ const A = {
     pushSend('🔔 تجربة لجهازك', 'لو شايف ده، الإشعارات شغالة عندك 👌', '#profile', [me()]).then(r => {
       setTimeout(() => readLastPush().then(() => { render(); toast(r?.sent ? (lastPush && Date.now() - lastPush.at < 20000 ? '✅ الإشعار وصل للجهاز' : '⚠️ السيرفر بعت بس الجهاز ماستلمش — المشكلة في الموبايل/الشبكة') : '⚠️ ماتبعتش: ' + (r?.error || 'مفيش اشتراك')); }), 8000); }); },
   pushTest: () => { if (!confirm('تبعت إشعار تجربة لكل المشتركين؟')) return; pushSend('🔔 تجربة', 'لو الإشعار ده وصلك، يبقى الإشعارات شغالة 👌', '#home', Object.keys(S.users)).then(r => toast(r?.none ? 'محدش مشترك' : r?.error ? '⚠️ ' + r.error : `وصل لـ ${r.sent} جهاز`)); },
+  inboxSeen: id => { let seen = []; try { seen = JSON.parse(LS.get('ob_inbox_seen') || '[]'); } catch {} seen = [...seen, id].slice(-50); LS.set('ob_inbox_seen', JSON.stringify(seen)); render(); },
   annSeen: () => { LS.set('ob_ann_seen', String(S.announce?.at)); render(); },
   // بداية جديدة: مسح كل الطلبيات غير المفتوحة + كل التحويلات + تصفير الأرصدة المرحّلة
   resetAll: async () => {
@@ -1234,16 +1287,16 @@ const A = {
 
   addItem: id => { const o = S.orders.find(x=>x.id===id); modal('أضف طلبك', itemForm(o), f => addItemFromForm(o, f), 'أضف'); },
   editItem: (oid, iid) => { const o = S.orders.find(x=>x.id===oid), it = (S.items[oid]||[]).find(x=>x.id===iid);
-    modal('تعديل الصنف', itemForm(o, it), f => updateDoc(doc(db,'orders',oid,'items',iid), { name:f.get('name').trim(), qty:+f.get('qty'), price:+f.get('price'), note:f.get('note').trim() })); },
+    modal('تعديل الصنف', itemForm(o, it), f => updW('i', doc(db,'orders',oid,'items',iid), { name:f.get('name').trim(), qty:+f.get('qty'), price:+f.get('price'), note:f.get('note').trim() })); },
   delItem: async (oid, iid) => { if (confirm('تحذف الصنف ده؟')) await deleteDoc(doc(db,'orders',oid,'items',iid)); },
   pickItem: (name, price) => { $('#f_name').value = name; if (+price) $('#f_price').value = price; else $('#f_price').focus(); },
   quick: async (oid, name) => {
     const o = S.orders.find(x=>x.id===oid); if (!o || o.status!=='open') return;
     const mine = (S.items[oid]||[]).find(i => i.uid===me() && i.name===name && !i.note);
-    if (mine) { await updateDoc(doc(db,'orders',oid,'items',mine.id), { qty: r2((+mine.qty||0) + 1) }); return toast(`${name}: ${r2((+mine.qty||0)+1)}`); }
+    if (mine) { try { await updW('i', doc(db,'orders',oid,'items',mine.id), { qty: r2((+mine.qty||0) + 1) }); } catch { return; } return toast(`${name}: ${r2((+mine.qty||0)+1)}`); }
     const price = priceFor(o, name);
     if (!price) return modal('سعر ' + esc(name), `<p class="mut" style="margin-top:0;font-size:13px">اكتب السعر مرة واحدة — هيتحفظ وبعد كده الصنف هيتضاف بضغطة.</p>` + itemForm(o, { name }), f => addItemFromForm(o, f), 'أضف');
-    await addDoc(collection(db,'orders',oid,'items'), { uid:me(), orderId:oid, name, qty:1, price, note:'', createdAt:serverTimestamp() });
+    try { await addW('i', collection(db,'orders',oid,'items'), { uid:me(), orderId:oid, name, qty:1, price, note:'', createdAt:serverTimestamp() }); } catch { return; }
     toast(`اتضاف ${name}`);
   },
   addRow: () => { $('#prows').insertAdjacentHTML('beforeend', priceRow()); const ins = $('#prows').querySelectorAll('input[name^="n_"]'); ins[ins.length-1].focus(); },
@@ -1254,9 +1307,8 @@ const A = {
     f => setDoc(doc(db,'config','catalog'), { items: readPriceRows(f), updatedBy:me(), updatedAt:serverTimestamp() })),
   repeatLast: async id => {
     const o = S.orders.find(x=>x.id===id), its = lastMyItems(o); if (!its.length) return;
-    const b = writeBatch(db);
-    its.forEach(it => b.set(doc(collection(db,'orders',id,'items')), { uid:me(), orderId:id, name:it.name, qty:+it.qty, price:+it.price, note:it.note||'', createdAt:serverTimestamp() }));
-    await b.commit(); closeModal(); toast(`اتضاف ${its.length} صنف`);
+    try { await wr('i', b => its.forEach(it => b.set(doc(collection(db,'orders',id,'items')), { uid:me(), orderId:id, name:it.name, qty:+it.qty, price:+it.price, note:it.note||'', createdAt:serverTimestamp() }))); } catch { return; }
+    closeModal(); toast(`اتضاف ${its.length} صنف`);
   },
 
   newTransfer: (to, amt) => modal('سجّل تحويل عملته', `
@@ -1271,8 +1323,22 @@ const A = {
       if (dup && !confirm(`انت مسجّل قبل كده تحويل ${money(amount)} لـ ${uname(to)} ولسه مستني تأكيد.\nتسجّل تحويل تاني؟`)) return;
       // من غير ما نستنى السيرفر: التحويل بيظهر على طول ويتبعت في الخلفية
       pushSend('تحويل مستني تأكيدك 💸', `${uname(me())} بيقول حوّلك ${money(jar ? Math.ceil(amount) : amount)}`, '#transfers', [to], 'transfer');
-      addDoc(collection(db,'transfers'), { fromUid:me(), toUid:to, amount, ...(jar ? { jar } : {}), note:f.get('note').trim(), confirmed:false, createdAt:serverTimestamp() }).catch(e => toast(errMsg(e)));
+      addW('t', collection(db,'transfers'), { fromUid:me(), toUid:to, amount, ...(jar ? { jar } : {}), note:f.get('note').trim(), confirmed:false, createdAt:serverTimestamp() }).catch(e => toast(errMsg(e)));
       toast(jar ? `اتسجّل ✓ — حوّل ${money(up)}، و${money(jar)} راحوا الحصالة 🐷` : `اتسجّل ✓ — مستني ${uname(to)} يأكد إنه وصله`); location.hash = 'transfers'; }, 'سجّل'),
+  jarPayOrder: async oid => {
+    const o = S.orders.find(x => x.id === oid), c = orderCalc(o), j = jarNow(); if (!o || !(j.total > 0)) return;
+    const used = r2(Math.min(j.total, c.total)); let rem = used; const covered = {};
+    for (const p of c.parts){ if (rem <= EPS) break; const a = r2(Math.min(p.total, rem)); if (a > 0){ covered[p.uid] = a; rem = r2(rem - a); } }
+    const scale = used / j.total, holders = {}, left = {};
+    for (const [h, a] of Object.entries(j.holders)){ holders[h] = r2(a * scale); left[h] = r2(a - holders[h]); }
+    const last = c.parts.find(p => !(covered[p.uid] >= r2(p.total)));
+    if (!confirm(`الحصالة هتدفع ${money(used)} من «${o.title}» (${money(c.total)}).\nبتتغطّى الأنصبة بترتيب الطلب${last ? `، والزيادة على اللي طلبوا الآخر (أولهم ${uname(last.uid)})` : ' — الطلبية كلها ببلاش 🎉'}.\nنكمّل؟`)) return;
+    await setDoc(doc(db,'carry','jar'), { payouts:[...(S.jarPay || []), { oid, payer:o.payerUid, total:used, holders, covered, left, at:Date.now(), by:me() }] });
+    confetti(); toast('🐷 الحصالة دفعت ' + money(used) + '!');
+    pushSend('🐷 الحصالة دفعت الفطار!', `«${o.title}» — الحصالة غطّت ${money(used)}${last ? `، والزيادة على ${uname(last.uid)}${c.parts.length > 1 ? ' واللي بعده' : ''}` : ' والطلبية كلها ببلاش 🎉'}`, '#order/' + oid, null, 'admin'); },
+  jarUndo: async oid => { if (!confirm('ترجّع فلوس الحصالة للحصالة وتلغي الدفع ده؟')) return;
+    await setDoc(doc(db,'carry','jar'), { payouts:(S.jarPay || []).filter(p => p.oid !== oid) }); toast('رجعت الحصالة زي ما كانت'); },
+  jarInfo: () => { S.jarOpen = !S.jarOpen; render(); },
   jarSpin: async () => { const j = jarNow(); if (!(j.total > 0)) return toast('الحصالة فاضية');
     const pool = Object.keys(S.users); const winner = pool[Math.floor(Math.random() * pool.length)];
     if (!confirm(`الحصالة فيها ${money(j.total)}. نلف ونشوف مين ياخدها؟`)) return;
@@ -1312,7 +1378,7 @@ function readPriceRows(f){
 // إضافة صنف من الفورم + حفظ سعره لو كان ناقص أو اتغيّر (علشان يتكتب مرة واحدة)
 async function addItemFromForm(o, f){
   const name = f.get('name').trim(), price = +f.get('price');
-  await addDoc(collection(db,'orders',o.id,'items'), { uid:me(), orderId:o.id, name, qty:+f.get('qty'), price, note:f.get('note').trim(), createdAt:serverTimestamp() });
+  await addW('i', collection(db,'orders',o.id,'items'), { uid:me(), orderId:o.id, name, qty:+f.get('qty'), price, note:f.get('note').trim(), createdAt:serverTimestamp() });
   await savePrice(o, name, price).catch(()=>{});
 }
 async function savePrice(o, name, price){
@@ -1444,7 +1510,8 @@ window.addEventListener('hashchange', () => { if (handleSkip()) return; S.otab =
 const LS = { get: k => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} } };
 let swReg = null, installEvt = null;
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').then(r => { swReg = r; }).catch(() => {});
+  navigator.serviceWorker.register('sw.js', { updateViaCache:'none' }).then(r => { swReg = r; r.update().catch(() => {}); document.addEventListener('visibilitychange', () => { if (!document.hidden) r.update().catch(() => {}); }); }).catch(() => {});
+  caches.keys().then(ks => { S.swVer = ks.find(k => /^ob-v/.test(k)) || ''; }).catch(() => {});
   navigator.serviceWorker.addEventListener('message', e => { if (e.data?.hash) location.hash = e.data.hash; });
 }
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; render(); });
@@ -1467,7 +1534,10 @@ const pushReady = () => PUSH_URL.startsWith('https://') && 'PushManager' in wind
 let myPushKey = null, pushErr = '', lastPush = null;
 async function readLastPush(){ try { const r = await (await caches.open('ob-meta')).match('./__last-push'); lastPush = r ? await r.json() : null; } catch { lastPush = null; } }
 readLastPush(); document.addEventListener('visibilitychange', () => { if (!document.hidden) readLastPush().then(render); });
+// نسخة التيست مابتبعتش ولا بتستقبل إشعارات (علشان الناس ماتاخدش الإشعار مرتين) — الإشعارات من الموقع الأساسي بس
+const PUSH_HOST = /^office-breakfast\.pages\.dev$|github\.io$/.test(location.hostname);
 async function pushSubscribe(){
+  if (!PUSH_HOST){ pushUnsubscribe(); return false; }
   if (!pushReady() || Notification.permission !== 'granted') return false;
   try {
     const reg = swReg || await navigator.serviceWorker.ready;
@@ -1485,20 +1555,22 @@ async function pushUnsubscribe(){
 // إرسال: uids = مين يوصله (افتراضي الكل) — مش بيتبعت لنفسك
 // kind: order | lunch | announce | poll | transfer — الأدمن يقدر يقفل أي نوع من «الإدارة»
 function pushSend(title, body, hash, uids, kind){
-  if (!PUSH_URL.startsWith('https://')) return Promise.resolve({ sent:0 });
+  if (!PUSH_URL.startsWith('https://') || !PUSH_HOST) return Promise.resolve({ sent:0, off:true, test:!PUSH_HOST });
   if (kind && S.pushCfg?.[kind] === false) return Promise.resolve({ sent:0, off:true });
   const subs = [];
   for (const u of Object.values(S.users)){ if ((u.id === me() && !uids?.includes(me())) || (uids && !uids.includes(u.id)) || (kind && u.pushOff?.[kind])) continue;
     for (const v of Object.values(u.push || {})) if (v?.endpoint && v.keys) subs.push({ endpoint:v.endpoint, keys:v.keys }); }
   if (!subs.length) return Promise.resolve({ sent:0, none:true });
-  return fetch(PUSH_URL, { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ subs, title, body, hash }) }).then(r => r.json()).catch(e => ({ error:String(e) }));
+  return (auth.currentUser ? auth.currentUser.getIdToken() : Promise.resolve('')).catch(() => '')
+    .then(tok => fetch(PUSH_URL, { method:'POST', headers:{ 'Content-Type':'application/json', ...(tok ? { Authorization:'Bearer ' + tok } : {}) }, body:JSON.stringify({ subs, title, body, hash }) }))
+    .then(r => r.json()).then(j => j?.error === 'rate' ? { ...j, error:'وصلت للحد — استنى شوية' } : j).catch(e => ({ error:String(e) }));
 }
 const PUSH_KINDS = [['order','طلبية جديدة'],['lunch','طلبية الغدا'],['closed','قفل الطلبية ونصيبك'],['runner','العجلة اختارتك'],['remind','تذكير «لسه ماطلبتش»'],['announce','إعلان'],['poll','تصويت'],['transfer','تحويل مستني تأكيد'],['admin','إشعارات الأدمن'],['summary','ملخص الشهر']];
 function _noop(){
 }
 async function notify(title, body, hash){
   if (document.visibilityState === 'visible') return toast(`${title} — ${body}`);
-  if (!notifOn() || myPushKey) return; // لو الجهاز مشترك في Push، الإشعار بيوصل من هناك
+  if (!PUSH_HOST || !notifOn() || myPushKey) return; // لو الجهاز مشترك في Push، الإشعار بيوصل من هناك
   const opt = { body, icon:'icon-192.png', badge:'icon-192.png', tag: hash, data:{ hash }, lang:'ar', dir:'rtl' };
   try { const reg = swReg || await navigator.serviceWorker?.ready; if (reg) return await reg.showNotification(title, opt); } catch {}
   try { new Notification(title, opt); } catch {}
@@ -1542,7 +1614,7 @@ function vApp(){
       myPushKey && S.users[me()]?.push?.[myPushKey] ? '✅ الجهاز ده مسجّل — الإشعارات هتوصلك حتى والموقع مقفول'
       : pushErr ? `⚠️ الجهاز ماتسجلش: <span dir="ltr" style="font-size:11px">${esc(pushErr)}</span><br>${/brave/i.test(navigator.userAgent) || navigator.brave ? 'لو بتستخدم Brave: الإعدادات ← Privacy and security ← فعّل «Use Google services for push messaging» وبعدين اقفلها وشغّلها تاني.' : 'اقفل الإشعارات وشغّلها تاني، ولو فضلت كده جرّب Chrome.'}`
       : '⏳ بيسجّل الجهاز…'}
-      ${myPushKey ? `<div style="margin-top:6px;font-size:12px">${lastPush ? `آخر إشعار وصل للجهاز ده: «${esc(lastPush.title||'')}» ${new Date(lastPush.at).toLocaleString('ar-EG',{hour:'numeric',minute:'2-digit',day:'numeric',month:'short'})}` : 'لسه مفيش إشعار وصل للجهاز ده'}
+      ${myPushKey ? `<div style="margin-top:6px;font-size:12px">${lastPush ? `<span class="mut">[${esc(S.swVer || '?')}]</span> آخر إشعار وصل للجهاز ده: «${esc(lastPush.title||'')}» ${new Date(lastPush.at).toLocaleString('ar-EG',{hour:'numeric',minute:'2-digit',day:'numeric',month:'short'})}` : `<span class="mut">[${esc(S.swVer || '?')}]</span> لسه مفيش إشعار وصل للجهاز ده`}
         <button class="btn sm" style="margin-inline-start:6px" data-act="pushSelf">جرّب على جهازي</button></div>` : ''}</div>` : ''}
     <div class="mut" style="font-size:12px;margin-top:6px">الإشعار بيوصل حتى لو الموقع مقفول (على الآيفون لازم الموقع يكون متسطّب على الشاشة الرئيسية).</div>
     ${isStandalone() ? '' : `<div class="between" style="margin-top:12px;border-top:1px solid var(--line);padding-top:12px"><div><b>سطّبه كتطبيق</b><div class="mut" style="font-size:13px">${installEvt ? 'أيقونة على الشاشة الرئيسية ويفتح من غير المتصفح' : ios ? 'من Safari: زرار المشاركة ← «Add to Home Screen»' : 'من قايمة المتصفح ← «Install app» أو «Add to Home screen»'}</div></div>

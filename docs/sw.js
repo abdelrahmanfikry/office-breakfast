@@ -1,6 +1,6 @@
 // فطار المكتب — Service Worker: يخلّي الموقع يتسطّب ويفتح من غير نت
 // زوّد رقم النسخة مع أي تعديل في الملفات علشان الكاش القديم يتمسح
-const VER = 'ob-v38';
+const VER = 'ob-v46';
 const SHELL = ['./', './index.html', './icon.png', './icon-192.png', './manifest.webmanifest'];
 
 self.addEventListener('install', e => {
@@ -49,7 +49,7 @@ self.addEventListener('push', e => {
   const hash = d.hash || '#home';
   // نسجّل إن الإشعار وصل للجهاز (للتشخيص من صفحة «حسابي»)
   caches.open('ob-meta').then(c => c.put('./__last-push', new Response(JSON.stringify({ title: d.title, at: Date.now() })))).catch(() => {});
-  const t = d.title || '', BN = [['🎡','wheel'],['🍳','order'],['🍲','lunch'],['✅','closed'],['⏰','remind'],['💸','money'],['📢','announce'],['🗳','poll']];
+  const t = d.title || '', BN = [['🎡','wheel'],['🍳','order'],['🍲','lunch'],['✅','closed'],['⏰','remind'],['💸','money'],['📢','announce'],['📣','announce'],['🗳','poll']];
   const banner = 'nb/' + ((BN.find(([em]) => t.includes(em)) || [,'default'])[1]) + '.jpg';
   e.waitUntil(self.registration.showNotification(d.title || 'فطار المكتب', {
     body: d.body || '', icon: 'icon-192.png', badge: 'badge.png', image: banner, tag: hash, renotify: true,
