@@ -333,6 +333,7 @@ function startListeners(){
     const cf = d.exists() ? d.data() : {};
     watchAuthors();
     S.ramadan = !!cf.ramadan; S.hiddenC = cf.hiddenComplaints || [];
+    S.cOpen = cf.cOpen !== false; S.cNamed = cf.cNamed || []; S.cBan = cf.cBan || [];
     S.pardonFee = cf.pardonFee ?? 10; S.pardonMax = cf.pardonMax ?? 1; S.treasurer = cf.treasurer || null; S.resetAt = cf.resetAt || 0;
     S.girlsJoke = d.exists() ? d.data().girlsJoke !== false : true;
     S.girlLines = d.exists() ? (d.data().girlLines || []) : [];
@@ -534,8 +535,9 @@ function vJar(){
 function allComplaints(){ return (S.complaints || []).slice().sort((a,b) => (b.at||0) - (a.at||0)); }
 function vComplaints(){
   const all = allComplaints(), list = S.cAll ? all : all.slice(0, 3);
-  return `<div class="card" style="margin-top:14px"><div class="between"><b>📮 صندوق الشكاوى <span class="mut" style="font-size:12px;font-weight:400">(محدش هيعرف مين كتبها)</span></b><button class="btn sm pri" data-act="cNew">اشتكي 🤐</button></div>
-    ${list.length ? list.map(c => `<div class="cmp">«${esc(c.text)}»<div class="mut" style="font-size:12px">${new Date(c.at).toLocaleString('ar-EG',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})}${isAdmin() ? ` · <b>من: ${esc(uname(S.cAuthors?.[c.id]) || '؟')}</b> · <a href="#" data-act="cDel" data-id="${c.id}" class="bad">امسحها</a>` : S.cAuthors?.[c.id] === me() ? ` · <a href="#" data-act="cDel" data-id="${c.id}" class="bad">امسح شكوتي</a>` : ''}</div></div>`).join('') : '<div class="mut" style="font-size:13px;margin-top:6px">مفيش شكاوى… لسه 👀</div>'}
+  return `<div class="card" style="margin-top:14px"><div class="between"><b>📮 صندوق الشكاوى ${S.cOpen ? '<span class="mut" style="font-size:12px;font-weight:400">(محدش هيعرف مين كتبها)</span>' : '<span class="pill cancelled">مقفول 🔒</span>'}</b><div class="row">${isAdmin() ? '<button class="btn sm" data-act="cSet">⚙️</button>' : ''}${S.cOpen && !S.cBan.includes(me()) ? '<button class="btn sm pri" data-act="cNew">اشتكي 🤐</button>' : ''}</div></div>
+    ${S.cBan.includes(me()) && S.cOpen ? '<div class="mut" style="font-size:13px">🚫 الأدمن قفل عليك الصندوق — كفاية هيافة 😅</div>' : ''}
+    ${list.length ? list.map(c => `<div class="cmp">«${esc(c.text)}»<div class="mut" style="font-size:12px">${new Date(c.at).toLocaleString('ar-EG',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})}${c.by && !isAdmin() ? ` · <b>من: ${esc(uname(c.by))}</b> 🙊` : ''}${isAdmin() ? ` · <b>من: ${esc(uname(S.cAuthors?.[c.id]) || '؟')}</b> · <a href="#" data-act="cDel" data-id="${c.id}" class="bad">امسحها</a>` : S.cAuthors?.[c.id] === me() ? ` · <a href="#" data-act="cDel" data-id="${c.id}" class="bad">امسح شكوتي</a>` : ''}</div></div>`).join('') : '<div class="mut" style="font-size:13px;margin-top:6px">مفيش شكاوى… لسه 👀</div>'}
     ${all.length > 3 ? `<a href="#" data-act="cAll" class="mut" style="font-size:13px">${S.cAll ? 'اقل' : `كل الشكاوى (${all.length})`}</a>` : ''}</div>`;
 }
 function vHome(){
@@ -1130,9 +1132,16 @@ const A = {
     return setDoc(doc(db,'users',me()), { votes:{ [p.id]: cur === +i ? null : +i } }, { merge:true }); },
   girlsJoke: (_, x) => setDoc(doc(db,'config','app'), { girlsJoke: x === '1' }, { merge:true }).then(() => toast(x === '1' ? 'الهزار اشتغل 🎀' : 'الهزار اتقفل')),
   ramadan: (_, x) => setDoc(doc(db,'config','app'), { ramadan: x === '1' }, { merge:true }).then(() => toast(x === '1' ? 'رمضان كريم 🌙' : 'وضع رمضان اتقفل')),
-  cNew: () => modal('شكوى مجهولة 🤐', `<p class="mut" style="margin-top:0;font-size:13px">اسمك مش هيظهر لحد غير الأدمن.</p><label>الشكوى<textarea name="t" maxlength="200" rows="3" required placeholder="مثلًا: الفول النهارده كان بارد زي قلب اللي نزل"></textarea></label>`,
+  cNew: () => { const named = S.cNamed.includes(me()); return modal(named ? 'شكوى (باسمك) 🙊' : 'شكوى مجهولة 🤐', `<p class="mut" style="margin-top:0;font-size:13px">${named ? 'الأدمن لغى السرية عندك — اسمك هيظهر للكل 👀' : 'اسمك مش هيظهر لحد غير الأدمن.'}</p><label>الشكوى<textarea name="t" maxlength="200" rows="3" required placeholder="مثلًا: الفول النهارده كان بارد زي قلب اللي نزل"></textarea></label>`,
       f => { const t = f.get('t').trim().slice(0, 200); if (!t) return; const ref = doc(collection(db,'complaints'));
-        return wr('c', b => { b.set(doc(db,'complaintAuthors',ref.id), { uid: me() }); b.set(ref, { text: t, at: Date.now() }); }).then(() => toast('الشكوى اتحطت في الصندوق 📮')).catch(e => toast(errMsg(e))); }, 'ابعت'),
+        return wr('c', b => { b.set(doc(db,'complaintAuthors',ref.id), { uid: me() }); b.set(ref, named ? { text: t, at: Date.now(), by: me() } : { text: t, at: Date.now() }); }).then(() => toast('الشكوى اتحطت في الصندوق 📮')).catch(e => toast(errMsg(e))); }, 'ابعت'); },
+  cSet: () => modal('إعدادات صندوق الشكاوى', `<label class="row" style="gap:8px"><input type="checkbox" name="open" ${S.cOpen ? 'checked' : ''} style="width:auto"> الصندوق مفتوح</label>
+      <p class="mut" style="font-size:13px;margin:10px 0 4px">لكل واحد: عادي · باسمه (شكاويه تظهر باسمه للكل) · ممنوع</p>
+      ${Object.values(S.users).sort((a,b)=>(a.name||'').localeCompare(b.name||'','ar')).map(u => { const v = S.cBan.includes(u.id) ? 'ban' : S.cNamed.includes(u.id) ? 'named' : ''; const n = allComplaints().filter(c => S.cAuthors?.[c.id] === u.id).length;
+        return `<label class="between" style="gap:8px"><span>${esc(u.name)}${n ? ` <span class="mut">(${n})</span>` : ''}</span><select name="u_${u.id}" style="width:auto"><option value="">عادي</option><option value="named" ${v==='named'?'selected':''}>باسمه 🙊</option><option value="ban" ${v==='ban'?'selected':''}>ممنوع 🚫</option></select></label>`; }).join('')}`,
+      f => { const cNamed = [], cBan = [];
+        for (const [k, v] of f.entries()) if (k.startsWith('u_')) { if (v === 'named') cNamed.push(k.slice(2)); if (v === 'ban') cBan.push(k.slice(2)); }
+        return setDoc(doc(db,'config','app'), { cOpen: f.get('open') === 'on', cNamed, cBan }, { merge:true }).then(() => toast('اتحفظ ✅')).catch(e => toast(errMsg(e))); }),
   cDel: id => { if (!confirm('تمسح الشكوى دي؟')) return; const b = writeBatch(db); b.delete(doc(db,'complaints',id)); b.delete(doc(db,'complaintAuthors',id)); return b.commit().catch(e => toast(errMsg(e))); },
   cAll: () => { S.cAll = !S.cAll; render(); },
   pardonSet: () => modal('كارت العفو', `<label>الغرامة (ج.م) — صفر يبقى ببلاش<input name="fee" type="number" min="0" step="0.5" inputmode="decimal" value="${+S.pardonFee || 0}" required></label>
