@@ -799,6 +799,7 @@ function vProfile(){
     </form></div>
   ${vApp()}
   ${vAdmin()}
+  <div class="card"><div class="between"><span>📦 نسخة الموقع: <b dir="ltr">${esc(S.swVer || '…')}</b></span><button class="btn sm" data-act="checkUpd">🔄 شيّك على تحديث</button></div></div>
   <div class="card"><div class="between"><span class="mut">${esc(S.me.email)}</span><button class="btn dan" data-act="logout">خروج</button></div></div>`;
 }
 function vAdmin(){
@@ -1195,6 +1196,10 @@ const A = {
         return setDoc(doc(db,'config','app'), { cOpen: f.get('open') === 'on', cNamed, cBan }, { merge:true }).then(() => toast('اتحفظ ✅')).catch(e => toast(errMsg(e))); }),
   cDel: id => { if (!confirm('تمسح الشكوى دي؟')) return; const b = writeBatch(db); b.delete(doc(db,'complaints',id)); b.delete(doc(db,'complaintAuthors',id)); return b.commit().catch(e => toast(errMsg(e))); },
   cAll: () => { S.cAll = !S.cAll; render(); },
+  checkUpd: async () => { toast('بيشيّك…');
+    try { const t = await fetch('sw.js?x=' + Date.now(), { cache:'no-store' }).then(r => r.text()); const v = (t.match(/const VER = '([^']+)'/) || [])[1];
+      if (v && S.swVer && v !== S.swVer){ await swReg?.update(); toast(`فيه نسخة جديدة (${v}) — بيحدّث…`); setTimeout(() => location.reload(), 1500); }
+      else toast('إنت على آخر نسخة ✅'); } catch { toast('مفيش نت دلوقتي'); } },
   approvalSet: (_, x) => { const on = x === '1';
     if (on && !confirm('تشغيل الموافقة: الحسابات الموجودة دلوقتي هتتوافق تلقائي، وأي حساب جديد يستنى موافقتك. تمام؟')) return;
     const b = writeBatch(db);
@@ -1592,8 +1597,20 @@ const LS = { get: k => { try { return localStorage.getItem(k); } catch { return 
 let swReg = null, installEvt = null;
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js', { updateViaCache:'none' }).then(r => { swReg = r; r.update().catch(() => {}); document.addEventListener('visibilitychange', () => { if (!document.hidden) r.update().catch(() => {}); }); }).catch(() => {});
-  caches.keys().then(ks => { S.swVer = ks.find(k => /^ob-v/.test(k)) || ''; }).catch(() => {});
+  caches.keys().then(ks => { S.swVer = ks.find(k => /^ob-v/.test(k)) || ''; render(); }).catch(() => {});
   navigator.serviceWorker.addEventListener('message', e => { if (e.data?.hash) location.hash = e.data.hash; });
+  // نسخة جديدة اتنزلت والصفحة لسه شغالة بالقديمة: شريط فوق «فيه تحديث» يحدّث بضغطة
+  const hadCtl = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadCtl || document.getElementById('updBar')) return;
+    const b = document.createElement('button'); b.id = 'updBar'; b.type = 'button';
+    b.textContent = '🔄 فيه تحديث جديد للموقع — اضغط هنا';
+    b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;border:0;padding:12px;font:inherit;font-weight:700;background:var(--pri,#e8590c);color:#fff;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.2)';
+    b.onclick = () => location.reload();
+    document.body.appendChild(b);
+  });
+  // التطبيق المفتوح طول اليوم: يشيّك على تحديث كل نص ساعة
+  setInterval(() => swReg?.update().catch(() => {}), 30 * 60e3);
 }
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; render(); });
 window.addEventListener('appinstalled', () => { installEvt = null; toast('اتسطّب على الموبايل'); render(); });
